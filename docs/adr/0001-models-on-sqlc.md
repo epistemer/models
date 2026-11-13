@@ -154,7 +154,9 @@ fixture tests each one. Not followed, and documented as limits:
 - An `overrides` entry that maps an enum's type to another Go type, which
   leaves `Label()` on a type sqlc doesn't declare: a compile error.
 - Names with letters outside ASCII, where jq's upper-casing and Go's
-  differ: the run stops.
+  differ: the run stops. [ADR 0002](0002-spike-s1-zp-labels.md) narrows
+  this to enum names: sqlc drops such letters from enum values itself, and
+  table and column names follow zp's ASCII-only casing.
 
 **D10. `Label()` and nothing else for enums** (decided by epistemer).
 `Label()` returns the value's `L10n` variable, or nil for a value the enum
