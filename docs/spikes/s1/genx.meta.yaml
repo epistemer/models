@@ -1,0 +1,74 @@
+# Spike S1 (ADR 0002), kept as a record: every label of ADR 0001 and the
+# enums generator as trivial generators over sqlc's request. Nothing loads
+# this file: a metafile only counts in the directory of a Go package.
+version: 1
+
+defs: |
+  # The parameters, hard-coded until genx has them (S1). The run against zp
+  # used its real prefix; app_ stands in for it here.
+  def params: {dir: "models", package: "models", table_prefix: "app_"};
+
+  # zp_pascal: zp's key casing. Split on "_", drop empty parts, upper-case
+  # the first ASCII letter of each.
+  def zp_pascal: [splits("_") | select(length > 0) | (.[0:1] | ascii_upcase) + .[1:]] | join("");
+  def readable: [splits("_") | select(length > 0) | (.[0:1] | ascii_upcase) + .[1:]] | join(" ");
+  def strip($p): if ($p != "" and startswith($p)) then .[($p | length):] else . end;
+  def text($name): (.comment // "" | gsub("^\\s+|\\s+$"; "")) as $c
+    | if $c != "" then $c else ($name | readable) end;
+
+  # sqlc v1.29.0's StructName with initialisms [id], on ASCII names.
+  def sqlc_title: (.[0:1] | ascii_upcase) + .[1:];
+  def sqlc_struct: gsub("[^A-Za-z0-9]"; "_")
+    | [splits("_") | if . == "id" then "ID" else sqlc_title end] | join("")
+    | if test("^[0-9]") then "_" + . else . end;
+  # sqlc's EnumReplace: -/:_ become _, other non-alphanumerics go.
+  def sqlc_enum_replace: [explode[]
+    | if (. == 45 or . == 47 or . == 58 or . == 95) then 95
+      elif ((. >= 97 and . <= 122) or (. >= 65 and . <= 90) or (. >= 48 and . <= 57)) then .
+      else empty end] | implode;
+  # constants: [{value, const}] as sqlc names them, numbering duplicates.
+  def sqlc_constants($enum):
+    reduce (.vals | to_entries[]) as $e ({seen: {}, out: []};
+      ($e.value | sqlc_enum_replace) as $r
+      | (if ($r == "" or .seen[$r]) then "value_\($e.key)" else $r end) as $v
+      | .seen[$v] = true
+      | .out += [{value: $e.value, const: ("\($enum)_\($v)" | sqlc_struct)}])
+    | .out;
+
+  def schema: .catalog as $c | $c.schemas[] | select(.name == $c.default_schema);
+
+generators:
+  labels:
+    doc: labels for enum values, tables, views and columns
+    needs: [sqlc.request/v1]
+    emits: labels/v1
+    units: |
+      params as $p
+      | .["sqlc.request/v1"][0]
+      | {domain: "labels/v1", producer: "models",
+         package: {name: $p.package, dir: $p.dir},
+         labels: (
+           [schema | .enums[] | .name as $e | sqlc_constants($e)[]
+            | {key: "enum.\($e).\(.value)", text: .value,
+               path: "enum.\($e).\(.value)", var: "L10n\(.const)"}]
+           +
+           [schema | .tables[] | .rel.name as $t | ($t | strip($p.table_prefix) | zp_pascal) as $T
+            | {key: "table.\($t)", text: text($t | strip($p.table_prefix)),
+               path: "table.\($t)", var: "L10n\($T)"},
+              (.columns[] | .name as $col | ($col | strip($p.table_prefix) | zp_pascal) as $C
+               | {key: "table.\($t).\($T)_\($C)", text: text($col | strip($p.table_prefix)),
+                  path: "table.\($t).\($col)", var: "L10n\($T)_\($C)"})]
+         )}
+    out: '"\(.package.dir)/zz_\(.package.name).labels.json"'
+
+  enums:
+    doc: Label() for every enum type
+    needs: [sqlc.request/v1]
+    units: |
+      params as $p
+      | .["sqlc.request/v1"][0]
+      | {package: $p.package, dir: $p.dir,
+         enums: [schema | .enums[] | .name as $e
+                 | {type: ($e | sqlc_struct), constants: sqlc_constants($e)}]}
+    out: '"\(.dir)/zz_\(.package)_enums.go"'
+    template: enums.go.tmpl
