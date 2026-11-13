@@ -3,7 +3,7 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
-## 2026-11-14: ownership, ADR 0001, the roadmap (M0)
+## 2026-11-14: ownership, ADR 0001, the roadmap, spike S1 (M0, M1.1)
 
 - **Landed:**
   - Ownership delegated to Claude until `v1.0.0`, on genx's terms
@@ -26,9 +26,24 @@ taken for you, what's next, and what's waiting on you.
   SQL (D5); comments are the English text (D7); one schema and one request
   (D8); sqlc's naming defaults only (D9); the root package holds only the
   metafile (D11); the request is committed (D12).
-- **Next:** M1.1, spike S1 against a copy of zp; M1.2, the fixture; M1.3,
-  parameters in genx.
-- **Waiting on you:** nothing yet. M1.3's amendment text will be.
+- **M1.1, spike S1** ([ADR 0002](adr/0002-spike-s1-zp-labels.md), PR #2):
+  on a copy of zp's schema in a scratch folder, all 995 of zp's keys and
+  every variable came out of the spike's trivial generators, and the
+  `Label()` methods compile with sqlc's models and i18n's Go. Review 0002
+  by Gemini 3.8 Flash (High), about 247k tokens: seven findings, five
+  accepted. One corrected me: every variable starts with `L10n`, so only
+  enum names need the non-ASCII refusal.
+- **Decided by you for genx amendment A4 (M1.3), each as recommended:**
+  parameters are declared per metafile (`params:` with `doc` and
+  `default`); an app sets them in a map form of its `use` entry
+  (`{generators, params}`), the list form staying valid; an unknown
+  parameter, or a value whose JSON type differs from a non-null default's,
+  is an error; queries (`defs`, `units`, `out`) read `$params`, templates
+  see only the unit; `genx list` shows the values; genxtest gains
+  `RenderParams(t, dir, generator, params map[string]any, inputs ...Input)`.
+- **Next:** M1.3, A4 in genx, in its own session; then M1.4 (genx
+  `v0.2.0`). M1.2, the fixture, can go alongside.
+- **Waiting on you:** nothing until the freeze (M1.5).
 
 ## 2026-11-14: the repository is prepared; no work has started
 
