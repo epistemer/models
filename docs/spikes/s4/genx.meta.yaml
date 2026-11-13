@@ -1,0 +1,45 @@
+# Spike S4 (genx ADR 0006), kept as a starting point: two trivial generators
+# over sqlc's codegen request. See README.md next to this file. This is not
+# the package's generator; nothing loads this file.
+version: 1
+
+defs: |
+  # pascal names a Go identifier the way sqlc does for zp's enums: split on
+  # everything that isn't a letter or a digit, upper-case each part's first
+  # letter. sqlc's rename and initialisms options aren't in the request, so
+  # this can't follow them (ADR 0006).
+  def pascal:
+    ([splits("[^\\p{L}\\p{N}]+") | select(length > 0) | (.[0:1] | ascii_upcase) + .[1:]] | join(""))
+    | if test("^[0-9]") then "_" + . else . end;
+
+generators:
+  enums:
+    doc: methods, i18n keys and option lists for every enum in sqlc's request
+    needs: [sqlc.request/v1]
+    units: |
+      .["sqlc.request/v1"][0]
+      | {PackageName: "models",
+         Enums: [(.catalog.schemas[]? | .enums[]?)
+                 | . as $e
+                 | ($e.name | pascal) as $typ
+                 | {Type: {Pascal: $typ, Snake: $e.name},
+                    Values: [$e.vals[] | {VarName: ($typ + (. | pascal)), Value: .}]}]}
+    out: '"models/zz_enums.go"'
+    template: enums.go.tmpl
+
+  enum-labels:
+    doc: a labels/v1 file for the enum values in sqlc's request
+    needs: [sqlc.request/v1]
+    emits: labels/v1
+    units: |
+      .["sqlc.request/v1"][0]
+      | {domain: "labels/v1", producer: "models",
+         package: {name: "models", dir: "models"},
+         labels: [(.catalog.schemas[]? | .enums[]?)
+                  | . as $e
+                  | ($e.name | pascal) as $typ
+                  | $e.vals[]
+                  | {key: "enum.\($e.name).\(.)", text: .,
+                     path: "enum.\($e.name).\(.)",
+                     var: "\($typ)\(. | pascal)Key"}]}
+    out: '"models/zz_models.labels.json"'

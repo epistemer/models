@@ -1,0 +1,11 @@
+# Build and test output
+*.exe
+*.test
+/coverage.out
+
+# Local databases
+*.db
+
+# sqlc's codegen request, when a spike or a test writes one from a private
+# schema. Fixtures that belong in the repository are named explicitly.
+codegen_request.json
