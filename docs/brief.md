@@ -1,5 +1,9 @@
 # Brief for the session that starts this package
 
+> **History.** Its open questions were answered on 2026-11-14 and the
+> design is [ADR 0001](adr/0001-models-on-sqlc.md). Kept as the record of
+> what was known before the work began.
+
 Written on 2026-11-14 by the session that released genx `v0.1.0`, to hand
 over what it knew. This is a starting point, not a design: nothing here is
 decided unless it says who decided it. Replace this file with the package's

@@ -1,11 +1,14 @@
 # models
 
-neozp's package for sqlc-generated database models. Work hasn't started.
+neozp's package for sqlc-generated database models.
 
-- Read [docs/brief.md](docs/brief.md) first, then the newest entry of
-  [docs/status.md](docs/status.md).
-- Ownership isn't delegated until epistemer says so in a session. Until
-  then, ask before deciding anything the brief lists as open.
+- Read [docs/roadmap.md](docs/roadmap.md), then the newest entry of
+  [docs/status.md](docs/status.md). The design is
+  [ADR 0001](docs/adr/0001-models-on-sqlc.md);
+  [docs/brief.md](docs/brief.md) is the history before it.
+- Claude owns this repository until v1.0.0, on the terms of
+  [docs/ownership.md](docs/ownership.md) (delegated 2026-11-14). API design
+  and the interface freeze are epistemer's.
 - Load the `genx` skill before touching a manifest, a metafile or a labels
   file, and the `i18n` and `cfgx` skills when the work uses them.
 - zp (`/home/epistemer/zp`) is private and read-only. Never run a
