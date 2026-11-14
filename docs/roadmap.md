@@ -85,7 +85,7 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 
 | ✓ | ID | Item | Size | Done when |
 |---|----|------|------|-----------|
-| ☐ | M3.1 | `examples/shop`: an app with sqlc, genx, i18n and models, its manifest, and `genxtest.AssertGenerated` | M | CI green on all three OSes, without building sqlc (no `check` for it) |
+| ☑ | M3.1 | `examples/shop`: an app with sqlc, genx, i18n and models, its manifest, and `genxtest.AssertGenerated` | M | CI green on all three OSes, with sqlc as the example's own tool and `sqlc diff` as its check (sqlc needs no cgo) |
 | ☑ | M3.2 | zp, on a copy in a scratch folder: generate with models, compare keys and variables with zp's files, build zp's models package, and time a run. Measure what committing the request costs (size, diff of a one-column change) | S | Numbers and findings in the status log and ADR 0002 or 0003; friction goes to genx's friction log |
 
 ## M4 — v0.1.0

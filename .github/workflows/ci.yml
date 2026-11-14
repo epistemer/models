@@ -34,6 +34,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
           cache: true
+          cache-dependency-path: '**/go.sum'
 
       - name: Check formatting (gofmt)
         run: |
@@ -53,7 +54,7 @@ jobs:
       - name: Run staticcheck
         if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27.x'
         run: |
-          for m in . gentest; do
+          for m in . gentest examples/shop; do
             (cd "$m" && go run honnef.co/go/tools/cmd/staticcheck@v0.8.2 ./...)
           done
 
@@ -61,21 +62,23 @@ jobs:
       - name: Check every go.mod is tidy
         if: matrix.os == 'ubuntu-latest' && matrix.go == '1.26.x'
         run: |
-          for m in . gentest testdata/sqlc; do
+          for m in . gentest examples/shop testdata/sqlc; do
             (cd "$m" && go mod tidy -diff)
           done
 
       - name: Run tests with race detector
         run: go test -race ./...
 
-      # The generators' tests: goldens, refusals, i18ntest, and genx check
-      # (genxtest.AssertGenerated), which runs sqlc diff from testdata/sqlc.
-      - name: Test the nested module gentest
-        working-directory: gentest
+      # The generators' tests (goldens, refusals, i18ntest) and the example.
+      # Both run genx check through genxtest.AssertGenerated, sqlc diff
+      # included.
+      - name: Test the nested modules
         run: |
-          go vet ./...
-          go vet -tags genx ./...
-          go test -race ./...
+          for m in gentest examples/shop; do
+            echo "== $m"
+            (cd "$m" && go build ./... && go vet ./... && go vet -tags genx ./... \
+              && go tool genx check && go test -race ./...)
+          done
 
   fixtures:
     name: sqlc fixtures (${{ matrix.os }})

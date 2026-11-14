@@ -1,0 +1,88 @@
+{
+  "domain": "labels/v1",
+  "labels": [
+    {
+      "key": "enum.order_status.pending",
+      "path": "enum.order_status.pending",
+      "text": "pending",
+      "var": "L10nOrderStatusPending"
+    },
+    {
+      "key": "enum.order_status.paid",
+      "path": "enum.order_status.paid",
+      "text": "paid",
+      "var": "L10nOrderStatusPaid"
+    },
+    {
+      "key": "enum.order_status.shipped",
+      "path": "enum.order_status.shipped",
+      "text": "shipped",
+      "var": "L10nOrderStatusShipped"
+    },
+    {
+      "key": "enum.order_status.cancelled",
+      "path": "enum.order_status.cancelled",
+      "text": "cancelled",
+      "var": "L10nOrderStatusCancelled"
+    },
+    {
+      "key": "table.shop_customer",
+      "path": "table.shop_customer",
+      "text": "Customer",
+      "var": "L10nCustomer"
+    },
+    {
+      "key": "table.shop_customer.Customer_Id",
+      "path": "table.shop_customer.id",
+      "text": "Id",
+      "var": "L10nCustomer_Id"
+    },
+    {
+      "key": "table.shop_customer.Customer_Email",
+      "path": "table.shop_customer.email",
+      "text": "Email address",
+      "var": "L10nCustomer_Email"
+    },
+    {
+      "key": "table.shop_customer.Customer_FullName",
+      "path": "table.shop_customer.full_name",
+      "text": "Full Name",
+      "var": "L10nCustomer_FullName"
+    },
+    {
+      "key": "table.shop_order",
+      "path": "table.shop_order",
+      "text": "Order",
+      "var": "L10nOrder"
+    },
+    {
+      "key": "table.shop_order.Order_Id",
+      "path": "table.shop_order.id",
+      "text": "Id",
+      "var": "L10nOrder_Id"
+    },
+    {
+      "key": "table.shop_order.Order_CustomerId",
+      "path": "table.shop_order.customer_id",
+      "text": "Customer Id",
+      "var": "L10nOrder_CustomerId"
+    },
+    {
+      "key": "table.shop_order.Order_Status",
+      "path": "table.shop_order.status",
+      "text": "Status",
+      "var": "L10nOrder_Status"
+    },
+    {
+      "key": "table.shop_order.Order_PlacedAt",
+      "path": "table.shop_order.placed_at",
+      "text": "Placed At",
+      "var": "L10nOrder_PlacedAt"
+    }
+  ],
+  "package": {
+    "dir": "models",
+    "name": "models"
+  },
+  "producer": "models"
+}
