@@ -3,7 +3,7 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
-## 2026-11-14: the generators (M2)
+## 2026-11-14: the generators (M2), and zp on them (M3.2)
 
 - **Landed:** `genx.meta.yaml` and `enums.go.tmpl` at the module root, with
   every check of interface §6. [ADR 0003](adr/0003-test-module.md): a
@@ -20,7 +20,14 @@ taken for you, what's next, and what's waiting on you.
   findings, three accepted. The real catch: the `L10n` check would have
   refused a table like `él10n`, because it read letters outside ASCII the
   way `struct_name` does, not the way sqlc does.
-- **Next:** M3.1, an example app; M3.2, zp on a copy.
+- **M3.2, zp on a copy** ([ADR 0004](adr/0004-zp-on-models.md)): the
+  merged generators, with zp's prefix as a parameter, give all 995 of zp's
+  keys and variables, refuse nothing, and compile. A warm run takes 1.9 s,
+  of which sqlc is 1.2 s. Committing the 5.6 MB request costs about 344 KB
+  of git objects, and a one-column change about 4 KB, so it stays
+  committed.
+- **Next:** M3.1, an example app; then M4, the quickstart, the skill and
+  `v0.1.0`.
 - **Waiting on you:** nothing.
 
 ## 2026-11-14: the interface, drafted and locked (M1.5)
