@@ -263,6 +263,7 @@ the contract; their wording may get clearer without an amendment.
 | An enum name with a character outside ASCII, or whose `structName` is empty | `models: enum "état": sqlc's Go name for it can't be derived` |
 | A table, view or column whose `<T>` or `<C>` (§5.2) is empty or has a character that isn't a letter or a decimal digit (`[\p{L}\p{Nd}]`), so `L10n<T>` or `L10n<T>_<C>` isn't a Go identifier | `models: column "app_order"."first name" gives "First name", which isn't a Go identifier` |
 | Two labels with one key, one path or one variable | `models: tables "app_user" and "user" both give the variable "L10nUser"` |
+| Two enums with one Go type, `structName` of their names (A1) | `models: enum "user1" and enum "user_1" both give sqlc the Go type "User1"` |
 | A table, view, enum or query of the default schema whose Go name in sqlc starts with `L10n`, which could clash with a variable: `structName` of its SQL name (sqlc may make a table's name singular, which doesn't change its start) | `models: table "l10n_note" gives sqlc the Go name "L10nNote"; names starting with "L10n" are reserved for labels` |
 
 genx itself refuses an unknown parameter, a value of the wrong JSON type
@@ -308,4 +309,14 @@ query builder (zp's `gen/view`). The roadmap's backlog orders them.
 
 ## 11. Amendments
 
-None yet.
+### A1. Two enums with one Go type (2026-11-14, before v0.1.0)
+
+The release review found that two enums whose names give one
+`structName`, such as `user1` and `user_1`, pass every check of §6 when
+their values differ, and `enums` then writes two `Label()` methods on one
+type. sqlc declares that type twice too, so the app never compiled. §6 now
+refuses it, naming both enums. A clarification under Principle 4, made by
+Claude as owner before any release; it can be overturned.
+
+`dir`'s element rules (§3, genx §7) are now also checked by models itself,
+so a bad `dir` is refused on runs that write nothing, as §3 says.

@@ -193,7 +193,7 @@ func TestNotReservedOutsideASCII(t *testing.T) {
 
 // TestParamsWithoutRequest: parameters are checked on every run (§3).
 func TestParamsWithoutRequest(t *testing.T) {
-	for _, params := range []map[string]any{{"dir": "models/"}, {"package": "type"}} {
+	for _, params := range []map[string]any{{"dir": "models/"}, {"package": "type"}, {"dir": "my models", "package": "models"}} {
 		for _, g := range []string{"labels", "enums"} {
 			f := &failure{TB: t}
 			genxtest.RenderParams(f, root, g, params)
@@ -235,6 +235,10 @@ func TestRefusals(t *testing.T) {
 		{"dir dot element", map[string]any{"dir": "a/./b"}, note, `models: parameter dir "a/./b": not a clean relative slash-separated path`},
 		{"dir empty", map[string]any{"dir": ""}, note, `models: parameter dir "": not a clean relative slash-separated path`},
 		{"dir dot", map[string]any{"dir": "."}, note, `models: parameter dir ".": not a clean relative slash-separated path`},
+		{"dir with a space", map[string]any{"dir": "my models", "package": "models"}, note, `models: parameter dir "my models": not a clean relative slash-separated path`},
+		{"dir hidden", map[string]any{"dir": ".models", "package": "models"}, note, `models: parameter dir ".models": not a clean relative slash-separated path`},
+		{"dir reserved on Windows", map[string]any{"dir": "db/aux.d", "package": "models"}, note, `models: parameter dir "db/aux.d": not a clean relative slash-separated path`},
+		{"package empty", map[string]any{"package": ""}, note, `models: parameter package: "" is not a Go package name`},
 		{"dir not a package name", map[string]any{"dir": "my-models"}, note, `models: parameter package: "my-models", the last element of dir, is not a Go package name; set package`},
 		{"package with a dash", map[string]any{"package": "my-models"}, note, `models: parameter package: "my-models" is not a Go package name`},
 		{"package keyword", map[string]any{"package": "type"}, note, `models: parameter package: "type" is not a Go package name`},
@@ -278,6 +282,9 @@ func TestRefusals(t *testing.T) {
 		{"sqlc's numbering clash", nil, func(t *testing.T) []genxtest.Input {
 			return []genxtest.Input{request(t, "public", public("", enum("e", "value_1", "!!")), "")}
 		}, `models: enum "e" value "value_1" and enum "e" value "!!" both give the variable "L10nEValue1"`},
+		{"two enums, one Go type", nil, func(t *testing.T) []genxtest.Input {
+			return []genxtest.Input{request(t, "public", public("", enum("user1", "a")+", "+enum("user_1", "b")), "")}
+		}, `models: enum "user1" and enum "user_1" both give sqlc the Go type "User1"`},
 		{"table reserved", nil, func(t *testing.T) []genxtest.Input {
 			return []genxtest.Input{request(t, "public", public(table("l10n_note", "id"), ""), "")}
 		}, `models: table "l10n_note" gives sqlc the Go name "L10nNote"; names starting with "L10n" are reserved for labels`},
