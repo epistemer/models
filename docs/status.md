@@ -3,6 +3,22 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-14: genx v0.2.0 has parameters (M1.3, M1.4)
+
+- **Landed in genx:** amendment A4 as you approved it
+  ([genx PR #15](https://github.com/epistemer/genx/pull/15)), tagged
+  `v0.2.0`. A metafile declares `params:`, an app sets them in the map form
+  of its `use` entry, and every query reads them as `$params`;
+  `genxtest.RenderParams` tests with other values. genx's e2e script
+  `params.txtar` runs this package's shape (`dir`, `package` defaulting to
+  null, `table_prefix`) end to end.
+- **Decided for you, in genx:** values belong to the `use` entry; `$params`
+  is `{}` without declarations; values aren't checked beyond their JSON
+  type. genx's status log has the rest.
+- **Next:** M2 on genx `v0.2.0`: the spike's `def params:` becomes the
+  metafile's `params:` and `$params`.
+- **Waiting on you:** nothing.
+
 ## 2026-11-14: ownership, ADR 0001, the roadmap, spike S1 (M0, M1.1)
 
 - **Landed:**
