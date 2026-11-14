@@ -9,3 +9,8 @@
 # sqlc's codegen request, when a spike or a test writes one from a private
 # schema. Fixtures that belong in the repository are named explicitly.
 codegen_request.json
+# The example's binary.
+/examples/shop/shop
+
+# The example commits its request, as an app does (interface §2).
+!/examples/shop/models/codegen_request.json

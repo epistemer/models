@@ -3,6 +3,20 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-14: the example (M3.1)
+
+- **Landed:** [examples/shop](../examples/shop/README.md), interface §2 as
+  an app writes it: sqlc and genx as its tools, `table_prefix: shop_`, a
+  `go:generate` that runs genx, `genxtest.AssertGenerated`, and a French
+  translation shown through `Label()`, a variable and `L10n(path)`. CI
+  builds it, runs `go tool genx check` and its tests on all three OSes.
+- **Found:** an app's first run needs `go mod tidy -e`, because `main.go`
+  imports the models package before sqlc has written it. The quickstart
+  (M4.1) says so.
+- **Review 0006** by Gemini 3.8 Flash (High), about 278k tokens: seven
+  findings, five accepted, one in part.
+- **Next:** M4, the quickstart, the skill and `v0.1.0`.
+
 ## 2026-11-14: the generators (M2), and zp on them (M3.2)
 
 - **Landed:** `genx.meta.yaml` and `enums.go.tmpl` at the module root, with
