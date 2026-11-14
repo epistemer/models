@@ -1,0 +1,11 @@
+# Writes request.json, sqlc's codegen request, next to this file. Run from
+# testdata/sqlc, where sqlc is pinned: go tool sqlc generate -f ../plain/sqlc.yaml
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "schema.sql"
+    queries: "query.sql"
+    gen:
+      json:
+        out: "."
+        filename: "request.json"
