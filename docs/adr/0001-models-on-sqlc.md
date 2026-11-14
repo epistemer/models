@@ -194,5 +194,5 @@ schemas other than the default.
   `All<Type>Options` → sqlc's values, the enum `Key` variables), no key
   changes, and its one table comment removed.
 - Tests run without sqlc: a request made from a public toy schema is a
-  committed fixture (`testdata/`), and CI regenerates it on Linux only,
-  where sqlc builds.
+  committed fixture (`testdata/`), and CI regenerates it with sqlc pinned
+  in a nested module, on all three OSes (sqlc v1.29.0 needs no cgo).

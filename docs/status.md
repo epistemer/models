@@ -3,6 +3,25 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-14: the fixture (M1.2)
+
+- **Landed:** [testdata](../testdata/README.md): two public toy schemas
+  (`shop`, which covers every naming case of ADR 0001's D4, D7 and D9, and
+  `plain`, with no enums), the requests sqlc v1.29.0 makes from them, and a
+  nested module pinning sqlc as a `tool`. A new CI job regenerates both and
+  fails on any change, on all three OSes.
+- **Checked:** sqlc's own Go for `shop` and the spike's generators agree on
+  all 19 enum constants (numbered duplicates, an empty value, `café`, the
+  `id` initialism, a leading digit), and `go vet` passes with i18n's
+  generated Go.
+- **Found:** sqlc v1.29.0 parses SQL in WebAssembly, so it needs no cgo,
+  which ADR 0001 had assumed. Each request is 2.1 MB but about 37 KB
+  gzipped, which is roughly what git stores.
+- **Review 0003** by Gemini 3.8 Flash (High), about 260k tokens: five
+  findings, three accepted.
+- **Next:** M1.5, the interface draft for your freeze.
+- **Waiting on you:** nothing yet; the freeze will be.
+
 ## 2026-11-14: genx v0.2.0 has parameters (M1.3, M1.4)
 
 - **Landed in genx:** amendment A4 as you approved it

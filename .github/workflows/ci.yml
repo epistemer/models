@@ -60,3 +60,45 @@ jobs:
 
       - name: Run tests with race detector
         run: go test -race ./...
+
+  fixtures:
+    name: sqlc fixtures (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+        working-directory: testdata/sqlc
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.x'
+          cache: true
+          cache-dependency-path: testdata/sqlc/go.sum
+
+      - name: Check the tool module is tidy
+        if: matrix.os == 'ubuntu-latest'
+        run: go mod tidy -diff
+
+      - name: Regenerate the requests with the pinned sqlc
+        run: |
+          go tool sqlc generate -f ../shop/sqlc.yaml
+          go tool sqlc generate -f ../plain/sqlc.yaml
+
+      - name: Fail if a request changed
+        working-directory: .
+        run: |
+          changed=$(git status --porcelain -- testdata/shop testdata/plain testdata/sqlc)
+          if [ -n "$changed" ]; then
+            echo "sqlc wrote different fixtures; regenerate them (testdata/README.md):"
+            echo "$changed"
+            git diff --stat -- testdata
+            exit 1
+          fi
