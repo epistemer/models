@@ -1,8 +1,7 @@
-# models — Developer Interface (v1, draft)
+# models — Developer Interface (v1, locked)
 
-> Status: **draft for the freeze (roadmap M1.5)**, written 2026-11-14. The
-> freeze is epistemer's. Once it's locked, any change needs an amendment,
-> recorded in §11. This document covers what an app writes and what it gets
+> Status: **locked by epistemer on 2026-11-14** (roadmap M1.5). Any change
+> needs an amendment, recorded in §11. This document covers what an app writes and what it gets
 > back; why it is so is in [ADR 0001](adr/0001-models-on-sqlc.md) and
 > [ADR 0002](adr/0002-spike-s1-zp-labels.md).
 

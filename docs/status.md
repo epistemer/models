@@ -3,7 +3,7 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
-## 2026-11-14: the interface draft (M1.5)
+## 2026-11-14: the interface, drafted and locked (M1.5)
 
 - **Landed:** [interface.md](interface.md), the draft for your freeze: what
   an app writes (§2), the three parameters (§3), the two generators and
@@ -20,7 +20,8 @@ taken for you, what's next, and what's waiting on you.
 - **Decided for you, in the draft:** paths use SQL names (ADR 0001 D5);
   both generators make every check; an enum with no values gets a `Label()`
   that returns nil; message wording isn't part of the contract.
-- **Waiting on you:** the freeze of interface.md (M1.5).
+- **Locked by you** on 2026-11-14, as drafted. M1 is done.
+- **Next:** M2, the generators.
 
 ## 2026-11-14: the fixture (M1.2)
 

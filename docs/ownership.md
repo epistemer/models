@@ -5,7 +5,7 @@
 | Owner | Claude, acting for epistemer (delegated on 2026-11-14) |
 | Until | `v1.0.0` is tagged |
 | Coding assistant | agy → Gemini. Claude picks the model for each task and never waits for a quota: when a model is cooling down, the strongest available one runs instead |
-| Source of truth | [ADR 0001](adr/0001-models-on-sqlc.md) (the design), `interface.md` (the contract, from M1.5), [roadmap.md](roadmap.md) (order and done-when) |
+| Source of truth | [ADR 0001](adr/0001-models-on-sqlc.md) (the design), [interface.md](interface.md) (the contract, locked 2026-11-14), [roadmap.md](roadmap.md) (order and done-when) |
 | Record | [status.md](status.md), plus a PR for every code change |
 
 The terms are cfgx's, i18n's and genx's.
