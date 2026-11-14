@@ -3,6 +3,25 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-14: the interface draft (M1.5)
+
+- **Landed:** [interface.md](interface.md), the draft for your freeze: what
+  an app writes (§2), the three parameters (§3), the two generators and
+  their files (§4), every naming rule with sqlc's numbering spelled out
+  (§5), the refusals (§6), the limits (§7), and what a later change to it
+  would mean (§10).
+- **Review 0004** by Gemini 4 Hydrogen (High), about 55k tokens (Argon was
+  cooling down): fifteen findings, twelve accepted (three in part). The
+  main changes: refusals for names that can't become Go identifiers and for
+  a missing default schema; `package` checked by an exact pattern; sqlc's
+  duplicate numbering stated as an algorithm (checked: sqlc itself breaks
+  on `value_1` then `!!`); white space listed by character; §7 corrected
+  row by row.
+- **Decided for you, in the draft:** paths use SQL names (ADR 0001 D5);
+  both generators make every check; an enum with no values gets a `Label()`
+  that returns nil; message wording isn't part of the contract.
+- **Waiting on you:** the freeze of interface.md (M1.5).
+
 ## 2026-11-14: the fixture (M1.2)
 
 - **Landed:** [testdata](../testdata/README.md): two public toy schemas
