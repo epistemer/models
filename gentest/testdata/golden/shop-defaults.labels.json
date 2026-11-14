@@ -1,0 +1,268 @@
+{
+  "domain": "labels/v1",
+  "labels": [
+    {
+      "key": "enum.order_status.pending",
+      "path": "enum.order_status.pending",
+      "text": "pending",
+      "var": "L10nOrderStatusPending"
+    },
+    {
+      "key": "enum.order_status.paid",
+      "path": "enum.order_status.paid",
+      "text": "paid",
+      "var": "L10nOrderStatusPaid"
+    },
+    {
+      "key": "enum.order_status.shipped",
+      "path": "enum.order_status.shipped",
+      "text": "shipped",
+      "var": "L10nOrderStatusShipped"
+    },
+    {
+      "key": "enum.payment_method.credit-card",
+      "path": "enum.payment_method.credit-card",
+      "text": "credit-card",
+      "var": "L10nPaymentMethodCreditCard"
+    },
+    {
+      "key": "enum.payment_method.bank/transfer",
+      "path": "enum.payment_method.bank/transfer",
+      "text": "bank/transfer",
+      "var": "L10nPaymentMethodBankTransfer"
+    },
+    {
+      "key": "enum.payment_method.cash:on:delivery",
+      "path": "enum.payment_method.cash:on:delivery",
+      "text": "cash:on:delivery",
+      "var": "L10nPaymentMethodCashOnDelivery"
+    },
+    {
+      "key": "enum.payment_method.pay-pal",
+      "path": "enum.payment_method.pay-pal",
+      "text": "pay-pal",
+      "var": "L10nPaymentMethodPayPal"
+    },
+    {
+      "key": "enum.payment_method.pay_pal",
+      "path": "enum.payment_method.pay_pal",
+      "text": "pay_pal",
+      "var": "L10nPaymentMethodValue4"
+    },
+    {
+      "key": "enum.payment_method.!!",
+      "path": "enum.payment_method.!!",
+      "text": "!!",
+      "var": "L10nPaymentMethodValue5"
+    },
+    {
+      "key": "enum.payment_method.value_5",
+      "path": "enum.payment_method.value_5",
+      "text": "value_5",
+      "var": "L10nPaymentMethodValue6"
+    },
+    {
+      "key": "enum.payment_method.café",
+      "path": "enum.payment_method.café",
+      "text": "café",
+      "var": "L10nPaymentMethodCaf"
+    },
+    {
+      "key": "enum.payment_method.",
+      "path": "enum.payment_method.",
+      "text": "",
+      "var": "L10nPaymentMethodValue8"
+    },
+    {
+      "key": "enum.id_kind.id",
+      "path": "enum.id_kind.id",
+      "text": "id",
+      "var": "L10nIDKindID"
+    },
+    {
+      "key": "enum.id_kind.user_id",
+      "path": "enum.id_kind.user_id",
+      "text": "user_id",
+      "var": "L10nIDKindUserID"
+    },
+    {
+      "key": "enum.id_kind.uuid",
+      "path": "enum.id_kind.uuid",
+      "text": "uuid",
+      "var": "L10nIDKindUuid"
+    },
+    {
+      "key": "enum.2fa_method.totp",
+      "path": "enum.2fa_method.totp",
+      "text": "totp",
+      "var": "L10n_2faMethodTotp"
+    },
+    {
+      "key": "enum.2fa_method.sms",
+      "path": "enum.2fa_method.sms",
+      "text": "sms",
+      "var": "L10n_2faMethodSms"
+    },
+    {
+      "key": "enum.2fa_method.u2f",
+      "path": "enum.2fa_method.u2f",
+      "text": "u2f",
+      "var": "L10n_2faMethodU2f"
+    },
+    {
+      "key": "enum.2fa_method.level_3",
+      "path": "enum.2fa_method.level_3",
+      "text": "level_3",
+      "var": "L10n_2faMethodLevel3"
+    },
+    {
+      "key": "table.shop_customer",
+      "path": "table.shop_customer",
+      "text": "Customer",
+      "var": "L10nShopCustomer"
+    },
+    {
+      "key": "table.shop_customer.ShopCustomer_Id",
+      "path": "table.shop_customer.id",
+      "text": "Id",
+      "var": "L10nShopCustomer_Id"
+    },
+    {
+      "key": "table.shop_customer.ShopCustomer_Email",
+      "path": "table.shop_customer.email",
+      "text": "Where receipts go",
+      "var": "L10nShopCustomer_Email"
+    },
+    {
+      "key": "table.shop_customer.ShopCustomer_IdKind",
+      "path": "table.shop_customer.id_kind",
+      "text": "Id Kind",
+      "var": "L10nShopCustomer_IdKind"
+    },
+    {
+      "key": "table.shop_customer.ShopCustomer_SecondFactor",
+      "path": "table.shop_customer.second_factor",
+      "text": "Second Factor",
+      "var": "L10nShopCustomer_SecondFactor"
+    },
+    {
+      "key": "table.shop_order",
+      "path": "table.shop_order",
+      "text": "Shop Order",
+      "var": "L10nShopOrder"
+    },
+    {
+      "key": "table.shop_order.ShopOrder_Id",
+      "path": "table.shop_order.id",
+      "text": "Id",
+      "var": "L10nShopOrder_Id"
+    },
+    {
+      "key": "table.shop_order.ShopOrder_CustomerId",
+      "path": "table.shop_order.customer_id",
+      "text": "Customer Id",
+      "var": "L10nShopOrder_CustomerId"
+    },
+    {
+      "key": "table.shop_order.ShopOrder_Status",
+      "path": "table.shop_order.status",
+      "text": "Status",
+      "var": "L10nShopOrder_Status"
+    },
+    {
+      "key": "table.shop_order.ShopOrder_Payment",
+      "path": "table.shop_order.payment",
+      "text": "Payment",
+      "var": "L10nShopOrder_Payment"
+    },
+    {
+      "key": "table.shop_order.ShopOrder_ShopRef",
+      "path": "table.shop_order.shop_ref",
+      "text": "Shop Ref",
+      "var": "L10nShopOrder_ShopRef"
+    },
+    {
+      "key": "table.shop_order.ShopOrder_AddressLine2",
+      "path": "table.shop_order.address_line2",
+      "text": "Address Line2",
+      "var": "L10nShopOrder_AddressLine2"
+    },
+    {
+      "key": "table.shop_order_line",
+      "path": "table.shop_order_line",
+      "text": "Shop Order Line",
+      "var": "L10nShopOrderLine"
+    },
+    {
+      "key": "table.shop_order_line.ShopOrderLine_OrderId",
+      "path": "table.shop_order_line.order_id",
+      "text": "Order Id",
+      "var": "L10nShopOrderLine_OrderId"
+    },
+    {
+      "key": "table.shop_order_line.ShopOrderLine_LineNo",
+      "path": "table.shop_order_line.line_no",
+      "text": "Line No",
+      "var": "L10nShopOrderLine_LineNo"
+    },
+    {
+      "key": "table.shop_order_line.ShopOrderLine_Title",
+      "path": "table.shop_order_line.title",
+      "text": "Title",
+      "var": "L10nShopOrderLine_Title"
+    },
+    {
+      "key": "table.audit_log",
+      "path": "table.audit_log",
+      "text": "Audit Log",
+      "var": "L10nAuditLog"
+    },
+    {
+      "key": "table.audit_log.AuditLog_Id",
+      "path": "table.audit_log.id",
+      "text": "Id",
+      "var": "L10nAuditLog_Id"
+    },
+    {
+      "key": "table.audit_log.AuditLog_HappenedAt",
+      "path": "table.audit_log.happened_at",
+      "text": "Happened At",
+      "var": "L10nAuditLog_HappenedAt"
+    },
+    {
+      "key": "table.audit_log.AuditLog_What",
+      "path": "table.audit_log.what",
+      "text": "What",
+      "var": "L10nAuditLog_What"
+    },
+    {
+      "key": "table.shop_order_summary",
+      "path": "table.shop_order_summary",
+      "text": "Orders at a glance",
+      "var": "L10nShopOrderSummary"
+    },
+    {
+      "key": "table.shop_order_summary.ShopOrderSummary_Id",
+      "path": "table.shop_order_summary.id",
+      "text": "Id",
+      "var": "L10nShopOrderSummary_Id"
+    },
+    {
+      "key": "table.shop_order_summary.ShopOrderSummary_Status",
+      "path": "table.shop_order_summary.status",
+      "text": "Status",
+      "var": "L10nShopOrderSummary_Status"
+    },
+    {
+      "key": "table.shop_order_summary.ShopOrderSummary_Lines",
+      "path": "table.shop_order_summary.lines",
+      "text": "Lines",
+      "var": "L10nShopOrderSummary_Lines"
+    }
+  ],
+  "package": {
+    "dir": "models",
+    "name": "models"
+  },
+  "producer": "models"
+}

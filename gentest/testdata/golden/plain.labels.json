@@ -1,0 +1,28 @@
+{
+  "domain": "labels/v1",
+  "labels": [
+    {
+      "key": "table.note",
+      "path": "table.note",
+      "text": "Note",
+      "var": "L10nNote"
+    },
+    {
+      "key": "table.note.Note_Id",
+      "path": "table.note.id",
+      "text": "Id",
+      "var": "L10nNote_Id"
+    },
+    {
+      "key": "table.note.Note_Body",
+      "path": "table.note.body",
+      "text": "Body",
+      "var": "L10nNote_Body"
+    }
+  ],
+  "package": {
+    "dir": "models",
+    "name": "models"
+  },
+  "producer": "models"
+}

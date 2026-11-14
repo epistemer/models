@@ -19,6 +19,10 @@ CREATE TYPE payment_method AS ENUM (
 -- The initialism id, in the type's name and in values.
 CREATE TYPE id_kind AS ENUM ('id', 'user_id', 'uuid');
 
+-- No values at all (PostgreSQL allows it): no labels, and a Label() that
+-- always returns nil.
+CREATE TYPE no_values AS ENUM ();
+
 -- A name that starts with a digit gets a leading underscore in Go; digits
 -- inside names.
 CREATE TYPE "2fa_method" AS ENUM ('totp', 'sms', 'u2f', 'level_3');

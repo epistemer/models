@@ -1,0 +1,15 @@
+# The shop fixture's schema, generated into package shop. genx.yaml runs it
+# with the sqlc pinned in testdata/sqlc.
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "../testdata/shop/schema.sql"
+    queries: "../testdata/shop/query.sql"
+    gen:
+      go:
+        package: "shop"
+        out: "shop"
+        emit_all_enum_values: true
+      json:
+        out: "shop"
+        filename: "request.json"

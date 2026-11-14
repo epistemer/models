@@ -77,9 +77,9 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 
 | ✓ | ID | Item | Size | Done when |
 |---|----|------|------|-----------|
-| ☐ | M2.1 | `labels` generator, with the naming functions in `defs` | M | Golden files with and without a prefix, and with `dir` and `package` set; the conformance check passes. Each refusal has a test with its message, on a small request written for it: another schema, two requests, a duplicate key, path or variable, an empty name after `strip`, a Go name starting with `L10n`, a letter outside ASCII, a bad `dir` or `package` |
-| ☐ | M2.2 | `enums` generator | S | Golden file; the toy schema's sqlc models, the generated labels and i18n's Go compile and vet together in a nested test module; the schema without enums writes no enums file; the same refusals as `labels` |
-| ☐ | M2.3 | `i18ntest` shows a translation set on generated keys: an enum value through `Label()`, a table, a view and a column through their variables and `L10n(path)`. `Label()` is nil for a value the enum doesn't have, and right for numbered duplicates | S | Tests in the nested module |
+| ☑ | M2.1 | `labels` generator, with the naming functions in `defs` | M | Golden files with and without a prefix, and with `dir` and `package` set; the conformance check passes. Each refusal has a test with its message, on a small request written for it: another schema, two requests, a duplicate key, path or variable, an empty name after `strip`, a Go name starting with `L10n`, a letter outside ASCII, a bad `dir` or `package` |
+| ☑ | M2.2 | `enums` generator | S | Golden file; the toy schema's sqlc models, the generated labels and i18n's Go compile and vet together in a nested test module; the schema without enums writes no enums file; the same refusals as `labels` |
+| ☑ | M2.3 | `i18ntest` shows a translation set on generated keys: an enum value through `Label()`, a table, a view and a column through their variables and `L10n(path)`. `Label()` is nil for a value the enum doesn't have, and right for numbered duplicates | S | Tests in the nested module |
 
 ## M3 — An example and zp
 

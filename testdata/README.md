@@ -6,7 +6,7 @@ from zp.
 
 | Directory | Schema | Request |
 |-----------|--------|---------|
-| [shop](shop/schema.sql) | Four enums, four tables (three with the prefix `shop_`), a view, comments | `shop/request.json` |
+| [shop](shop/schema.sql) | Five enums (one with no values), four tables (three with the prefix `shop_`), a view, comments | `shop/request.json` |
 | [plain](plain/schema.sql) | One table, no enums, no prefix | `plain/request.json` |
 | [sqlc](sqlc/go.mod) | A nested module that pins sqlc v1.29.0 as a tool, so the root module doesn't depend on it | – |
 
@@ -45,6 +45,7 @@ Table rows give the label's key, variable, path or text, as named.
 | A value that collides with a number | `value_5` (index 6) | `PaymentMethodValue6` |
 | A letter outside ASCII in a value | `café` | `PaymentMethodCaf`; the key keeps `café` |
 | An empty value | `''` (index 8) | `PaymentMethodValue8`; key `enum.payment_method.`, empty text |
+| An enum with no values | `no_values` | type `NoValues`, no labels; its `Label()` always returns nil |
 | The initialism `id` | type `id_kind`, values `id`, `user_id`, `uuid` | `IDKind`, `IDKindID`, `IDKindUserID`, `IDKindUuid` |
 | A leading digit in a type | `2fa_method` | type `_2faMethod`, constant `_2faMethodTotp` |
 | Digits inside names | values `u2f`, `level_3`; column `shop_order.address_line2` | `_2faMethodU2f`, `_2faMethodLevel3`; key `table.shop_order.Order_AddressLine2` |

@@ -606,6 +606,11 @@
             "comment": ""
           },
           {
+            "name": "no_values",
+            "vals": [],
+            "comment": ""
+          },
+          {
             "name": "2fa_method",
             "vals": [
               "totp",

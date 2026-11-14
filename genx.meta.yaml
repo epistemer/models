@@ -1,0 +1,182 @@
+# models' trivial generators, over sqlc's codegen request. The contract is
+# docs/interface.md; the section numbers below refer to it.
+version: 1
+
+params:
+  dir:
+    doc: the Go package's directory, from the module root, where sqlc writes its models (§3)
+    default: models
+  package:
+    doc: the Go package's name; null means the last element of dir (§3)
+    default: null
+  table_prefix:
+    doc: removed from table and column names in variables, English text and column keys (§3)
+    default: ""
+
+defs: |
+  # --- Parameters (§3) -----------------------------------------------------
+
+  def go_keywords: ["break", "case", "chan", "const", "continue", "default",
+    "defer", "else", "fallthrough", "for", "func", "go", "goto", "if",
+    "import", "interface", "map", "package", "range", "return", "select",
+    "struct", "switch", "type", "var"];
+
+  def package_name_ok: type == "string" and test("^[A-Za-z_][A-Za-z0-9_]*$")
+    and . != "_" and (. as $n | go_keywords | index([$n]) | not);
+
+  # params: {dir, pkg, prefix}, checked; stops the run when one is wrong.
+  def params:
+    $params.dir as $d
+    | if ($d | type) != "string" or $d == "" or ($d | startswith("/"))
+         or ($d | split("/") | any(. == "" or . == "." or . == ".."))
+      then error("models: parameter dir \($d | tojson): not a clean relative slash-separated path")
+      else . end
+    | (if $params.package == null then ($d | split("/") | last) else $params.package end) as $p
+    | if ($p | package_name_ok) then .
+      elif $params.package == null
+      then error("models: parameter package: \($p | tojson), the last element of dir, is not a Go package name; set package")
+      else error("models: parameter package: \($p | tojson) is not a Go package name")
+      end
+    | if ($params.table_prefix | type) != "string"
+      then error("models: parameter table_prefix: \($params.table_prefix | tojson) is not a string")
+      else . end
+    | {dir: $d, pkg: $p, prefix: $params.table_prefix};
+
+  # --- Naming functions (§5.1) ---------------------------------------------
+
+  def strip($prefix):
+    if $prefix != "" and startswith($prefix) then .[($prefix | length):] else . end;
+
+  def zp_parts: [splits("_") | select(length > 0) | (.[0:1] | ascii_upcase) + .[1:]];
+  def zp_pascal: zp_parts | join("");
+  def readable: zp_parts | join(" ");
+
+  # sqlc's EnumReplace: -, /, : and _ become _; other ASCII letters and
+  # digits stay; everything else goes.
+  def sqlc_replace: [explode[]
+    | if (. == 45 or . == 47 or . == 58 or . == 95) then 95
+      elif ((. >= 97 and . <= 122) or (. >= 65 and . <= 90) or (. >= 48 and . <= 57)) then .
+      else empty end] | implode;
+
+  # sqlc's StructName with initialisms [id], for ASCII names.
+  def struct_name: gsub("[^A-Za-z0-9]"; "_")
+    | [splits("_") | if . == "id" then "ID" else (.[0:1] | ascii_upcase) + .[1:] end]
+    | join("")
+    | if test("^[0-9]") then "_" + . else . end;
+
+  # sqlc's numbering of an enum's values (§5.2): [{value, const}].
+  def constants($enum):
+    reduce ((.vals // []) | to_entries[]) as $e ({seen: {}, out: []};
+      ($e.value | sqlc_replace) as $r
+      | (if ($r == "" or .seen[$r]) then "value_\($e.key)" else $r end) as $v
+      | .seen[$v] = true
+      | .out += [{value: $e.value, const: ("\($enum)_\($v)" | struct_name)}])
+    | .out;
+
+  # English text (§5.3): the trimmed comment, else the readable name.
+  def text($name):
+    ((.comment // "") | gsub("^[\\t\\n\\v\\f\\r\\x{85}\\p{Z}]+|[\\t\\n\\v\\f\\r\\x{85}\\p{Z}]+$"; "")) as $c
+    | if $c != "" then $c else ($name | readable) end;
+
+  # --- The model of one request, with every check of §6 --------------------
+
+  def go_name_part($what):
+    if test("^[\\p{L}\\p{Nd}]+$") then .
+    else error("models: \($what) gives \(tojson), which isn't a Go identifier") end;
+
+  # sqlc_start: the start of sqlc's StructName for any name. Unlike
+  # struct_name it keeps letters outside ASCII, as sqlc does, so "él10n"
+  # isn't read as "L10n"; only the start matters here.
+  def sqlc_start: gsub("[^\\p{L}\\p{Nd}]"; "_")
+    | [splits("_") | if . == "id" then "ID" else (.[0:1] | ascii_upcase) + .[1:] end]
+    | join("");
+
+  def not_reserved($what):
+    (sqlc_start) as $g
+    | if ($g | startswith("L10n"))
+      then error("models: \($what) gives sqlc the Go name \($g | tojson); names starting with \"L10n\" are reserved for labels")
+      else . end;
+
+  # unique: stops the run when two labels share $field. (Not written with
+  # //, which would swallow the error.)
+  def unique($field; $name):
+    ([group_by(.[$field])[] | select(length > 1)][0]) as $d
+    | if $d == null then .
+      else error("models: \($d[0].src) and \($d[1].src) both give the \($name) \($d[0][$field] | tojson)") end;
+
+  # model($p): {enums: [{type, constants}], labels: [...]} for the request
+  # that is the input, or an error.
+  def model($p):
+    .catalog as $c
+    | $c.default_schema as $ds
+    | ([$c.schemas[]? | select(.name == $ds)][0]
+       // error("models: the default schema \($ds | tojson) isn't in the request")) as $s
+    | ([$c.schemas[]?
+        | select(.name != $ds and (.name | IN("pg_catalog", "information_schema", "pg_temp") | not))
+        | select(((.tables // []) | length) > 0 or ((.enums // []) | length) > 0)][0]) as $other
+    | if $other != null
+      then error("models: schema \($other.name | tojson) has tables or enums; only the default schema \($ds | tojson) is supported")
+      else . end
+    | ([.queries[]? | .name | not_reserved("query \(tojson)")] | length) as $_
+    | [$s.enums[]?
+       | .name as $e
+       | if ($e | test("[^\\x00-\\x7F]")) or ($e | struct_name) == ""
+         then error("models: enum \($e | tojson): sqlc's Go name for it can't be derived")
+         else . end
+       | ($e | not_reserved("enum \($e | tojson)")) as $_
+       | {name: $e, type: ($e | struct_name), constants: constants($e)}] as $enums
+    | [$s.tables[]?
+       | .rel.name as $t
+       | ($t | not_reserved("table \($t | tojson)")) as $_
+       | ($t | strip($p.prefix) | zp_pascal | go_name_part("table \($t | tojson)")) as $T
+       | {name: $t, T: $T, text: text($t | strip($p.prefix)),
+          columns: [.columns[]?
+            | .name as $col
+            | ($col | strip($p.prefix) | zp_pascal
+               | go_name_part("column \($t | tojson).\($col | tojson)")) as $C
+            | {name: $col, C: $C, text: text($col | strip($p.prefix))}]}] as $tables
+    | ([$enums[] | .name as $e | .constants[]
+        | {src: "enum \($e | tojson) value \(.value | tojson)",
+           key: "enum.\($e).\(.value)", path: "enum.\($e).\(.value)",
+           text: .value, var: "L10n\(.const)"}]
+       + [$tables[] | .name as $t | .T as $T
+          | {src: "table \($t | tojson)", key: "table.\($t)", path: "table.\($t)",
+             text: .text, var: "L10n\($T)"},
+            (.columns[]
+             | {src: "column \($t | tojson).\(.name | tojson)",
+                key: "table.\($t).\($T)_\(.C)", path: "table.\($t).\(.name)",
+                text: .text, var: "L10n\($T)_\(.C)"})]) as $labels
+    | ($labels | unique("key"; "key") | unique("path"; "path") | unique("var"; "variable")) as $_
+    | {enums: [$enums[] | {type, constants}], labels: [$labels[] | del(.src)]};
+
+  # requests: the one request, if any (§6: never two).
+  def request:
+    .["sqlc.request/v1"] as $r
+    | if ($r | length) > 1 then error("models: \($r | length) sqlc requests; one is supported")
+      else $r[] end;
+
+generators:
+  labels:
+    doc: a labels/v1 file for every enum value, table, view and column of sqlc's default schema
+    needs: [sqlc.request/v1]
+    emits: labels/v1
+    units: |
+      params as $p
+      | request
+      | model($p)
+      | select(.labels | length > 0)
+      | {domain: "labels/v1", producer: "models",
+         package: {name: $p.pkg, dir: $p.dir}, labels: .labels}
+    out: '"\(.package.dir)/zz_\(.package.name).labels.json"'
+
+  enums:
+    doc: Label() for every enum type of sqlc's default schema
+    needs: [sqlc.request/v1]
+    units: |
+      params as $p
+      | request
+      | model($p)
+      | select(.enums | length > 0)
+      | {package: $p.pkg, dir: $p.dir, enums: .enums}
+    out: '"\(.dir)/zz_\(.package)_enums.go"'
+    template: enums.go.tmpl
