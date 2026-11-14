@@ -24,11 +24,17 @@ defs: |
   def package_name_ok: type == "string" and test("^[A-Za-z_][A-Za-z0-9_]*$")
     and . != "_" and (. as $n | go_keywords | index([$n]) | not);
 
+  # dir_element_ok: genx's rules for an element of an output path (its §7).
+  def dir_element_ok:
+    test("^[A-Za-z0-9._-]+$") and (startswith(".") | not) and (endswith(".") | not)
+    and ((split(".")[0] | ascii_upcase)
+         | test("^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$") | not);
+
   # params: {dir, pkg, prefix}, checked; stops the run when one is wrong.
   def params:
     $params.dir as $d
     | if ($d | type) != "string" or $d == "" or ($d | startswith("/"))
-         or ($d | split("/") | any(. == "" or . == "." or . == ".."))
+         or ($d | split("/") | any(. == "" or . == "." or . == ".." or (dir_element_ok | not)))
       then error("models: parameter dir \($d | tojson): not a clean relative slash-separated path")
       else . end
     | (if $params.package == null then ($d | split("/") | last) else $params.package end) as $p
@@ -125,6 +131,10 @@ defs: |
          else . end
        | ($e | not_reserved("enum \($e | tojson)")) as $_
        | {name: $e, type: ($e | struct_name), constants: constants($e)}] as $enums
+    | ([$enums | group_by(.type)[] | select(length > 1)][0]) as $twin
+    | if $twin != null
+      then error("models: enum \($twin[0].name | tojson) and enum \($twin[1].name | tojson) both give sqlc the Go type \($twin[0].type | tojson)")
+      else . end
     | [$s.tables[]?
        | .rel.name as $t
        | ($t | not_reserved("table \($t | tojson)")) as $_

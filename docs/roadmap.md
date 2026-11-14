@@ -92,9 +92,9 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 
 | ✓ | ID | Item | Size | Done when |
 |---|----|------|------|-----------|
-| ☐ | M4.1 | README quickstart: add models to an app on sqlc, genx and i18n | S | A newcomer can follow it |
-| ☐ | M4.2 | The `models` skill in `~/.claude/skills/models/`, where epistemer keeps the other packages' skills | S | Written against the frozen interface |
-| ☐ | M4.3 | Cross-model review of the release, then CHANGELOG and tag `v0.1.0` | S | Tag pushed |
+| ☑ | M4.1 | README quickstart: add models to an app on sqlc, genx and i18n | S | A newcomer can follow it |
+| ☑ | M4.2 | The `models` skill in `~/.claude/skills/models/`, where epistemer keeps the other packages' skills | S | Written against the frozen interface |
+| ☑ | M4.3 | Cross-model review of the release, then CHANGELOG and tag `v0.1.0` | S | Tag pushed |
 
 ## After v0.1.0 (backlog)
 

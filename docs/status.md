@@ -3,6 +3,25 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-14: v0.1.0 (M4)
+
+- **Landed:** the README with a quickstart (followed in an empty module,
+  from `go mod init` to `go tool genx check`), the CHANGELOG, and the
+  `models` skill in `~/.claude/skills/models/`.
+- **Review 0007** of the release by Gemini 4 Hydrogen (High), about 161k
+  tokens: seven findings, five accepted, one in part. Two changed code:
+  `dir` is now checked against genx's path rules on every run, and two
+  enums that sqlc names alike (`user1`, `user_1`) are refused.
+- **Decided for you:** interface amendment A1, that refusal. sqlc's own Go
+  breaks there too, so it changes no working app; listed in interface §11
+  so you can overturn it.
+- **Tagged:** `v0.1.0`.
+- **Next:** v1.0.0 waits until zp's business code runs on models (the
+  roadmap's rule). The backlog: sqlc's `rename` and `initialisms` as
+  parameters, several requests or schemas, option types with the forms
+  package, views' query builder.
+- **Waiting on you:** nothing.
+
 ## 2026-11-14: the example (M3.1)
 
 - **Landed:** [examples/shop](../examples/shop/README.md), interface §2 as
