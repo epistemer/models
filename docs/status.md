@@ -3,6 +3,26 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-14: the generators (M2)
+
+- **Landed:** `genx.meta.yaml` and `enums.go.tmpl` at the module root, with
+  every check of interface §6. [ADR 0003](adr/0003-test-module.md): a
+  nested module, `gentest`, tests them: package `shop` is generated from
+  the shop fixture by its own `genx.yaml` (sqlc through the pinned tool,
+  then models and i18n) and checked by `genxtest.AssertGenerated`; golden
+  files cover the defaults, other `dir` and `package` values and the schema
+  without enums, each rendered twice; 26 refusal cases run against both
+  generators; `i18ntest` reads translations back through `Label()`, the
+  variables and `L10n(path)`.
+- **The fixture** gained an enum with no values, so its `Label()` is
+  compiled too.
+- **Review 0005** by Gemini 4 Hydrogen (High), about 79k tokens: six
+  findings, three accepted. The real catch: the `L10n` check would have
+  refused a table like `él10n`, because it read letters outside ASCII the
+  way `struct_name` does, not the way sqlc does.
+- **Next:** M3.1, an example app; M3.2, zp on a copy.
+- **Waiting on you:** nothing.
+
 ## 2026-11-14: the interface, drafted and locked (M1.5)
 
 - **Landed:** [interface.md](interface.md), the draft for your freeze: what

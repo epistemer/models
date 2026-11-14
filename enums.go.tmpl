@@ -1,0 +1,17 @@
+// Code generated from sqlc's request by github.com/epistemer/models. DO NOT EDIT.
+
+package {{.package}}
+
+import "github.com/epistemer/i18n"
+{{range .enums}}
+// Label returns the label of t, or nil when t isn't a value of {{.type}}.
+func (t {{.type}}) Label() i18n.TKer {
+	switch t {
+	{{- range .constants}}
+	case {{.const}}:
+		return L10n{{.const}}
+	{{- end}}
+	}
+	return nil
+}
+{{end}}

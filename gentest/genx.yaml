@@ -1,0 +1,15 @@
+version: 1
+producers:
+  - name: sqlc
+    run:   [go, -C, ../testdata/sqlc, tool, sqlc, generate, -f, ../../gentest/sqlc.yaml]
+    check: [go, -C, ../testdata/sqlc, tool, sqlc, diff, -f, ../../gentest/sqlc.yaml]
+    emits:
+      - path: shop/request.json
+        domain: sqlc.request/v1
+use:
+  - github.com/epistemer/models:
+      generators: [labels, enums]
+      params:
+        dir: shop
+        table_prefix: shop_
+  - github.com/epistemer/i18n: [labels]
