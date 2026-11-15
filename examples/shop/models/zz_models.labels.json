@@ -78,6 +78,36 @@
       "path": "table.shop_order.placed_at",
       "text": "Placed At",
       "var": "L10nOrder_PlacedAt"
+    },
+    {
+      "key": "table.shop_order_list_view",
+      "path": "table.shop_order_list_view",
+      "text": "Orders",
+      "var": "L10nOrderListView"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Id",
+      "path": "table.shop_order_list_view.id",
+      "text": "Id",
+      "var": "L10nOrderListView_Id"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Status",
+      "path": "table.shop_order_list_view.status",
+      "text": "Status",
+      "var": "L10nOrderListView_Status"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_PlacedAt",
+      "path": "table.shop_order_list_view.placed_at",
+      "text": "Placed At",
+      "var": "L10nOrderListView_PlacedAt"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Email",
+      "path": "table.shop_order_list_view.email",
+      "text": "Email",
+      "var": "L10nOrderListView_Email"
     }
   ],
   "package": {

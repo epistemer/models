@@ -77,3 +77,11 @@ type ShopOrder struct {
 	Status     OrderStatus
 	PlacedAt   pgtype.Timestamptz
 }
+
+// Orders
+type ShopOrderListView struct {
+	ID       int64
+	Status   OrderStatus
+	PlacedAt pgtype.Timestamptz
+	Email    string
+}
