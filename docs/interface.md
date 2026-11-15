@@ -201,9 +201,11 @@ func (t OrderStatus) Label() i18n.TKer {
 
 Every table or view of the default schema whose SQL name ends in `_view`,
 in the request's order, gets a method on sqlc's `Queries`. `<Type>` is
-sqlc's type for the relation, `structName` of its name (a name ending in
-`_view` isn't made singular; one starting with a digit gets sqlc's `_`,
-as in `_1View`); each field is `structName` of a column's name. For a view `order_summary_view`:
+sqlc's type for the relation, `structName` of its name (sqlc makes names
+singular, which leaves a name ending in `_view` alone except for its one
+rule that ignores the end: a leading `oxen` becomes `ox`, so `oxen_view`
+is `OxView`; a name starting with a digit gets sqlc's `_`, as in
+`_1View`); each field is `structName` of a column's name. For a view `order_summary_view`:
 
 ```go
 // Code generated from sqlc's request by github.com/epistemer/models. DO NOT EDIT.
@@ -223,8 +225,8 @@ type Listings interface {
 
 var _ Listings = (*Queries)(nil)
 
-// ListOrderSummaryView returns the rows of order_summary_view that lq
-// selects, and how many rows its search and filters match.
+// ListOrderSummaryView returns the rows of order_summary_view
+// that lq selects, and how many rows its search and filters match.
 func (q *Queries) ListOrderSummaryView(ctx context.Context, lq listing.Query) ([]OrderSummaryView, int64, error) {
 	rowsSQL, countSQL, args, err := listing.Build(lq, "order_summary_view",
 		[]string{"id", "status", "total", "placed", "note"})
@@ -390,13 +392,16 @@ ends in `_view`:
 | Case | Example message |
 |------|-----------------|
 | The request's engine isn't `postgresql` | `models: views need PostgreSQL; the request's engine is "mysql"` |
-| A `_view` relation or one of its columns has a name with a character outside ASCII, or whose `structName` is empty | `models: view "café_view": sqlc's Go name for it can't be derived` |
+| A `_view` relation or one of its columns has a name with a character outside printable ASCII (a control character too), or a column whose `structName` is empty | `models: view "café_view": sqlc's Go name for it can't be derived` |
 | A `_view` relation with no columns | `models: view "empty_view" has no columns` |
-| Two columns of a `_view` relation with one `structName` (sqlc declares the field twice) | `models: view "dup_view": columns "user_1" and "user1" both give the field "User1"` |
-| Two `_view` relations with one `<Type>` | `models: views "user_1_view" and "user1_view" both give sqlc the Go type "User1View"` |
+| Two columns of a `_view` relation with one `structName` (sqlc declares the field twice) | `models: view "dup_view": columns "id" and "ID" both give the field "ID"` |
+| Two `_view` relations with one `<Type>` | `models: views "id_view" and "ID_view" both give sqlc the Go type "IDView"` |
 | A query whose name, as written, is a method `List<Type>` | `models: query "ListOrderSummaryView" clashes with the listing method of view "order_summary_view"` |
 | An enum whose `structName` is `Listings`, the type sqlc would then declare (a query named `Listings` gives a method and the constant `listings`, which don't clash) | `models: enum "listings" gives sqlc the Go name "Listings", which views declares` |
-| A query whose sqlc constant is `listing` (a query named `Listing` or `listing`), which hides the package `listing` | `models: query "Listing" gives sqlc the constant "listing", which views imports as a package` |
+| A query whose sqlc constant (its name with the first letter lower-cased) hides a name the views file uses: `listing`, `context`, `append`, `len`, `nil`, `int64`, `string` or `error` | `models: query "Listing" gives sqlc the constant "listing", which hides a name the views file uses` |
+
+Where zp's casing also collides (`user_1` and `user1`), the shared refusal
+of two labels with one key or variable stops the run first.
 
 genx itself refuses an unknown parameter, a value of the wrong JSON type
 (genx A4), and an output path its §7 rejects.
@@ -467,7 +472,10 @@ and package `listing` (§4.4), with their refusals (§6) and limits (§7).
 It changes nothing an app on v0.1.0 writes or gets: `views` runs only when
 switched on. A new generator and package: a minor version, `v0.2.0`.
 
-Clarified while building it (M5.4), by Claude as owner: a query named
-`Listings` isn't refused, since sqlc declares no type for it; and the floor
-on the total (§4.3) holds only when rows came back, so a page past the end
-reports the count.
+Clarified while building it (M5.4, review 0010), by Claude as owner: a
+query named `Listings` isn't refused, since sqlc declares no type for it;
+the floor on the total (§4.3) holds only when rows came back, so a page
+past the end reports the count; `oxen` names follow sqlc's singular rule;
+a control character in a name is refused, like one outside ASCII; and the
+refusal of a query constant covers every name the file uses, not only
+`listing`. Each refuses only apps whose generated code couldn't compile.

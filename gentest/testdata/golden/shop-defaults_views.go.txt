@@ -48,6 +48,7 @@ func (q *Queries) ListShopOrderListView(ctx context.Context, lq listing.Query) (
 		}
 		items = append(items, i)
 	}
+	rows.Close()
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
 	}
@@ -60,8 +61,8 @@ func (q *Queries) ListShopOrderListView(ctx context.Context, lq listing.Query) (
 	if err := q.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
-	if n > 0 {
-		total = max(total, int64(lq.Offset+n))
+	if n > 0 && total < int64(lq.Offset+n) {
+		total = int64(lq.Offset + n)
 	}
 	return items, total, nil
 }
@@ -94,6 +95,7 @@ func (q *Queries) ListShopPageView(ctx context.Context, lq listing.Query) ([]Sho
 		}
 		items = append(items, i)
 	}
+	rows.Close()
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
 	}
@@ -106,8 +108,8 @@ func (q *Queries) ListShopPageView(ctx context.Context, lq listing.Query) ([]Sho
 	if err := q.db.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
-	if n > 0 {
-		total = max(total, int64(lq.Offset+n))
+	if n > 0 && total < int64(lq.Offset+n) {
+		total = int64(lq.Offset + n)
 	}
 	return items, total, nil
 }

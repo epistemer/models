@@ -326,17 +326,19 @@ func TestRefusals(t *testing.T) {
 	}
 }
 
-// TestViewsNames: sqlc's names for a digit-led relation and a keyword
-// column; a query named Listings declares no type, so it isn't refused; a
-// relation whose name merely contains _view gets nothing.
+// TestViewsNames: sqlc's names for a digit-led relation, an oxen relation
+// (sqlc's one singular rule that ignores the end) and a keyword column; a
+// query named Listings declares no type, so it isn't refused; a relation
+// whose name merely contains _view gets nothing.
 func TestViewsNames(t *testing.T) {
-	in := request(t, "public", public(table("1_view", "order", "user_id")+", "+table("view_log", "id")+", "+table("preview", "id"), ""),
-		`{"name": "Listings"}`)
+	in := request(t, "public", public(table("1_view", "order", "user_id")+", "+table("Oxen_view", "id")+", "+
+		table("view_log", "id")+", "+table("preview", "id"), ""), `{"name": "Listings"}`)
 	got := string(only(t, render(t, "views", nil, in), "models/zz_models_views.go"))
 	for _, want := range []string{
 		"func (q *Queries) List_1View(ctx context.Context, lq listing.Query) ([]_1View, int64, error) {",
 		`listing.Build(lq, "1_view", []string{`,
 		"&i.Order,", "&i.UserID,",
+		"func (q *Queries) ListOxView(ctx context.Context, lq listing.Query) ([]OxView, int64, error) {",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("views file lacks %s:\n%s", want, got)
@@ -346,6 +348,15 @@ func TestViewsNames(t *testing.T) {
 		if strings.Contains(got, unwanted) {
 			t.Errorf("views file has %s:\n%s", unwanted, got)
 		}
+	}
+}
+
+// TestViewsOtherEngine: another engine is refused only when there is a
+// _view relation to list.
+func TestViewsOtherEngine(t *testing.T) {
+	in := engineRequest(t, "mysql", "public", public(table("note", "id"), ""), "")
+	if files := render(t, "views", nil, in); len(files) != 0 {
+		t.Errorf("views wrote %v", names(files))
 	}
 }
 
@@ -370,7 +381,11 @@ func TestViewsRefusals(t *testing.T) {
 		{"two columns, one field", in(table("dup_view", "id", "ID"), "", ""), `models: view "dup_view": columns "id" and "ID" both give the field "ID"`},
 		{"two views, one type", in(table("id_view", "x")+", "+table("ID_view", "x"), "", ""), `models: views "id_view" and "ID_view" both give sqlc the Go type "IDView"`},
 		{"query named like the method", in(table("order_view", "id"), "", `{"name": "ListOrderView"}`), `models: query "ListOrderView" clashes with the listing method of view "order_view"`},
-		{"query with the constant listing", in(table("order_view", "id"), "", `{"name": "Listing"}`), `models: query "Listing" gives sqlc the constant "listing", which views imports as a package`},
+		{"query with the constant listing", in(table("order_view", "id"), "", `{"name": "Listing"}`), `models: query "Listing" gives sqlc the constant "listing", which hides a name the views file uses`},
+		{"query named listing", in(table("order_view", "id"), "", `{"name": "listing"}`), `models: query "listing" gives sqlc the constant "listing", which hides a name the views file uses`},
+		{"query hiding len", in(table("order_view", "id"), "", `{"name": "Len"}`), `models: query "Len" gives sqlc the constant "len", which hides a name the views file uses`},
+		{"query hiding context", in(table("order_view", "id"), "", `{"name": "Context"}`), `models: query "Context" gives sqlc the constant "context", which hides a name the views file uses`},
+		{"query named like an oxen method", in(table("oxen_view", "id"), "", `{"name": "ListOxView"}`), `models: query "ListOxView" clashes with the listing method of view "oxen_view"`},
 		{"enum named Listings", in(table("order_view", "id"), enum("listings", "a"), ""), `models: enum "listings" gives sqlc the Go name "Listings", which views declares`},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -385,10 +400,20 @@ func TestViewsRefusals(t *testing.T) {
 			for _, g := range []string{"labels", "enums"} {
 				f := &failure{TB: t}
 				genxtest.RenderParams(f, root, g, nil, c.input(t))
-				if f.msg != "" && c.name != "view outside ASCII" && c.name != "column outside ASCII" {
+				if f.msg != "" {
 					t.Errorf("%s refused it too: %s", g, f.msg)
 				}
 			}
 		})
+	}
+}
+
+// TestViewsControlCharacter: a newline in a view's name never reaches the
+// generated comment; the shared rule refuses it first.
+func TestViewsControlCharacter(t *testing.T) {
+	f := &failure{TB: t}
+	genxtest.RenderParams(f, root, "views", nil, request(t, "public", public(table("order\n_view", "id"), ""), ""))
+	if !strings.Contains(f.msg, "isn't a Go identifier") {
+		t.Errorf("message %q", f.msg)
 	}
 }

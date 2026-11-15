@@ -19,7 +19,7 @@ import (
 // queries connects to MODELS_TEST_DATABASE_URL, creates the shop fixture's
 // schema in a schema of its own, fills it, and drops it at the end. The
 // test is skipped without the variable; CI sets it on Linux.
-func queries(t *testing.T) *shop.Queries {
+func queries(t *testing.T) *pgx.Conn {
 	t.Helper()
 	url := os.Getenv("MODELS_TEST_DATABASE_URL")
 	if url == "" {
@@ -65,7 +65,23 @@ func queries(t *testing.T) *shop.Queries {
 			t.Fatalf("%.60s: %v", sql, err)
 		}
 	}
-	return shop.New(conn)
+	return conn
+}
+
+// counting is sqlc's DBTX, counting the count statements (the only
+// QueryRow a listing runs) and running before ahead of each.
+type counting struct {
+	shop.DBTX
+	counts int
+	before func()
+}
+
+func (c *counting) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+	c.counts++
+	if c.before != nil {
+		c.before()
+	}
+	return c.DBTX.QueryRow(ctx, sql, args...)
 }
 
 func filter(column string, op listing.Op, value any) listing.Filter {
@@ -81,35 +97,42 @@ func ids(rows []shop.ShopOrderListView) []int64 {
 }
 
 func TestListings(t *testing.T) {
-	q := queries(t)
+	db := &counting{DBTX: queries(t)}
+	q := shop.New(db)
 	byID := []listing.Sort{{Column: "id"}}
 	for _, c := range []struct {
-		name  string
-		lq    listing.Query
-		ids   []int64
-		total int64
+		name    string
+		lq      listing.Query
+		ids     []int64
+		total   int64
+		counted bool
 	}{
-		{"everything", listing.Query{Sort: byID}, []int64{10, 11, 12, 13, 14}, 5},
-		{"enum filter, sqlc's type", listing.Query{Filters: []listing.Filter{filter("status", listing.Eq, shop.OrderStatusPaid)}, Sort: byID}, []int64{10, 12, 14}, 3},
-		{"enum filter, a string", listing.Query{Filters: []listing.Filter{filter("status", listing.Ne, "paid")}, Sort: byID}, []int64{11, 13}, 2},
+		{"everything", listing.Query{Sort: byID}, []int64{10, 11, 12, 13, 14}, 5, false},
+		{"enum filter, sqlc's type", listing.Query{Filters: []listing.Filter{filter("status", listing.Eq, shop.OrderStatusPaid)}, Sort: byID}, []int64{10, 12, 14}, 3, false},
+		{"enum filter, a string", listing.Query{Filters: []listing.Filter{filter("status", listing.Ne, "paid")}, Sort: byID}, []int64{11, 13}, 2, false},
 		{"every comparison", listing.Query{Filters: []listing.Filter{
 			filter("id", listing.Gt, 10), filter("id", listing.Ge, 11), filter("id", listing.Lt, 14), filter("id", listing.Le, 13),
-		}, Sort: byID}, []int64{11, 12, 13}, 3},
-		{"search, case and type ignored", listing.Query{Search: "PAY", SearchIn: []string{"payment", "email"}, Sort: byID}, []int64{10, 13}, 2},
-		{"search escapes % and _", listing.Query{Search: "b_50%", SearchIn: []string{"email"}, Sort: byID}, []int64{12, 13, 14}, 3},
-		{"a wildcard is literal", listing.Query{Search: "_", SearchIn: []string{"order"}, Sort: byID}, nil, 0},
+		}, Sort: byID}, []int64{11, 12, 13}, 3, false},
+		{"search, case and type ignored", listing.Query{Search: "PAY", SearchIn: []string{"payment", "email"}, Sort: byID}, []int64{10, 13}, 2, false},
+		{"search escapes % and _", listing.Query{Search: "b_50%", SearchIn: []string{"email"}, Sort: byID}, []int64{12, 13, 14}, 3, false},
+		{"a wildcard is literal", listing.Query{Search: "_", SearchIn: []string{"order"}, Sort: byID}, nil, 0, false},
 		{"search and a filter", listing.Query{
 			Search: "r-1", SearchIn: []string{"email", "order"},
 			Filters: []listing.Filter{filter("status", listing.Eq, "paid")}, Sort: byID,
-		}, []int64{10, 12, 14}, 3},
-		{"sort by a keyword column, descending", listing.Query{Sort: []listing.Sort{{Column: "order", Desc: true}}}, []int64{14, 13, 12, 11, 10}, 5},
-		{"first page, counted", listing.Query{Sort: byID, Limit: 2}, []int64{10, 11}, 5},
-		{"middle page, counted", listing.Query{Sort: byID, Limit: 2, Offset: 2}, []int64{12, 13}, 5},
-		{"short last page, not counted", listing.Query{Sort: byID, Limit: 2, Offset: 4}, []int64{14}, 5},
-		{"past the end, counted", listing.Query{Sort: byID, Limit: 2, Offset: 10}, nil, 5},
-		{"offset without a limit", listing.Query{Sort: byID, Offset: 3}, []int64{13, 14}, 5},
+		}, []int64{10, 12, 14}, 3, false},
+		{"sort by a keyword column, descending", listing.Query{Sort: []listing.Sort{{Column: "order", Desc: true}}}, []int64{14, 13, 12, 11, 10}, 5, false},
+		{"first page", listing.Query{Sort: byID, Limit: 2}, []int64{10, 11}, 5, true},
+		{"middle page", listing.Query{Sort: byID, Limit: 2, Offset: 2}, []int64{12, 13}, 5, true},
+		{"short last page", listing.Query{Sort: byID, Limit: 2, Offset: 4}, []int64{14}, 5, false},
+		{"full last page", listing.Query{Sort: byID, Limit: 2, Offset: 3}, []int64{13, 14}, 5, true},
+		{"one page that fits exactly", listing.Query{Sort: byID, Limit: 5}, []int64{10, 11, 12, 13, 14}, 5, true},
+		{"past the end", listing.Query{Sort: byID, Limit: 2, Offset: 10}, nil, 5, true},
+		{"offset without a limit", listing.Query{Sort: byID, Offset: 3}, []int64{13, 14}, 5, false},
+		{"offset past the end without a limit", listing.Query{Sort: byID, Offset: 10}, nil, 5, true},
+		{"no match with a limit", listing.Query{Filters: []listing.Filter{filter("id", listing.Gt, 99)}, Limit: 2}, nil, 0, false},
 	} {
 		t.Run(c.name, func(t *testing.T) {
+			db.counts = 0
 			rows, total, err := q.ListShopOrderListView(t.Context(), c.lq)
 			if err != nil {
 				t.Fatal(err)
@@ -120,19 +143,45 @@ func TestListings(t *testing.T) {
 			if total != c.total {
 				t.Errorf("total %d, want %d", total, c.total)
 			}
+			if counted := db.counts > 0; counted != c.counted {
+				t.Errorf("counted %v, want %v", counted, c.counted)
+			}
 		})
 	}
 }
 
-func TestListingFields(t *testing.T) {
-	q := queries(t)
-	rows, _, err := q.ListShopOrderListView(t.Context(), listing.Query{Filters: []listing.Filter{filter("id", listing.Eq, 11)}})
+// TestListingTotalFloor: rows deleted between the page and the count don't
+// make the total smaller than the rows already returned.
+func TestListingTotalFloor(t *testing.T) {
+	conn := queries(t)
+	db := &counting{DBTX: conn, before: func() {
+		if _, err := conn.Exec(context.Background(), "DELETE FROM shop_order WHERE id >= 11"); err != nil {
+			t.Error(err)
+		}
+	}}
+	rows, total, err := shop.New(db).ListShopOrderListView(t.Context(),
+		listing.Query{Sort: []listing.Sort{{Column: "id"}}, Limit: 2, Offset: 2})
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := shop.ShopOrderListView{ID: 11, Status: shop.OrderStatusPending, Email: "ann@example.com", Order: "r-11"}
-	if len(rows) != 1 || rows[0] != want {
-		t.Errorf("got %+v, want [%+v]", rows, want)
+	if got := ids(rows); !slices.Equal(got, []int64{12, 13}) || total != 4 {
+		t.Errorf("got %v and %d, want [12 13] and 4", got, total)
+	}
+}
+
+func TestListingFields(t *testing.T) {
+	q := shop.New(queries(t))
+	rows, _, err := q.ListShopOrderListView(t.Context(), listing.Query{
+		Filters: []listing.Filter{filter("id", listing.Le, 11)}, Sort: []listing.Sort{{Column: "id"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []shop.ShopOrderListView{
+		{ID: 10, Status: shop.OrderStatusPaid, Payment: shop.NullPaymentMethod{PaymentMethod: shop.PaymentMethodPayPal, Valid: true}, Email: "ann@example.com", Order: "r-10"},
+		{ID: 11, Status: shop.OrderStatusPending, Email: "ann@example.com", Order: "r-11"},
+	}
+	if !slices.Equal(rows, want) {
+		t.Errorf("got %+v, want %+v", rows, want)
 	}
 	pages, total, err := q.ListShopPageView(t.Context(), listing.Query{Sort: []listing.Sort{{Column: "seen_at", Desc: true}}})
 	if err != nil {
@@ -145,7 +194,7 @@ func TestListingFields(t *testing.T) {
 }
 
 func TestListingErrors(t *testing.T) {
-	q := queries(t)
+	q := shop.New(queries(t))
 	_, _, err := q.ListShopOrderListView(t.Context(), listing.Query{Sort: []listing.Sort{{Column: "id; DROP TABLE shop_order"}}})
 	if !errors.Is(err, listing.ErrQuery) {
 		t.Errorf("unknown column: err = %v, want ErrQuery", err)
