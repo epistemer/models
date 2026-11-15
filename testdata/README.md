@@ -6,7 +6,7 @@ from zp.
 
 | Directory | Schema | Request |
 |-----------|--------|---------|
-| [shop](shop/schema.sql) | Five enums (one with no values), four tables (three with the prefix `shop_`), a view, comments | `shop/request.json` |
+| [shop](shop/schema.sql) | Five enums (one with no values), five tables (four with the prefix `shop_`), two views, comments | `shop/request.json` |
 | [plain](plain/schema.sql) | One table, no enums, no prefix | `plain/request.json` |
 | [sqlc](sqlc/go.mod) | A nested module that pins sqlc v1.29.0 as a tool, so the root module doesn't depend on it | – |
 
@@ -57,6 +57,8 @@ Table rows give the label's key, variable, path or text, as named.
 | A column comment with spaces around it | `shop_customer.email` | text `Where receipts go` |
 | A comment of white space only | `shop_order.shop_ref` | text `Ref` |
 | A view, with a comment | `shop_order_summary` | key `table.shop_order_summary`, text `Orders at a glance` |
+| A view whose name ends in `_view`, with a nullable enum and a column named `order` | `shop_order_list_view` | method `ListShopOrderListView`, fields `ID` and `Order` (interface §4.3) |
+| A table whose name ends in `_view` | `shop_page_view` | method `ListShopPageView` |
 
 The refusals (another schema, two requests, duplicates, an empty name after
 the prefix, a Go name starting with `L10n`, an enum name outside ASCII) are

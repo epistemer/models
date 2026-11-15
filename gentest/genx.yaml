@@ -8,7 +8,7 @@ producers:
         domain: sqlc.request/v1
 use:
   - github.com/epistemer/models:
-      generators: [labels, enums]
+      generators: [labels, enums, views]
       params:
         dir: shop
         table_prefix: shop_

@@ -9,6 +9,7 @@ sql:
       go:
         package: "shop"
         out: "shop"
+        sql_package: "pgx/v5"
         emit_all_enum_values: true
       json:
         out: "shop"

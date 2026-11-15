@@ -5,10 +5,10 @@
 package shop
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type IDKind string
@@ -274,7 +274,7 @@ func All_2faMethodValues() []_2faMethod {
 
 type AuditLog struct {
 	ID         int64
-	HappenedAt time.Time
+	HappenedAt pgtype.Timestamptz
 	What       string
 }
 
@@ -294,7 +294,7 @@ type ShopOrder struct {
 	Payment    NullPaymentMethod
 	//
 	ShopRef      string
-	AddressLine2 sql.NullString
+	AddressLine2 pgtype.Text
 }
 
 type ShopOrderLine struct {
@@ -303,9 +303,23 @@ type ShopOrderLine struct {
 	Title   string
 }
 
+type ShopOrderListView struct {
+	ID      int64
+	Status  OrderStatus
+	Payment NullPaymentMethod
+	Email   string
+	Order   string
+}
+
 // Orders at a glance
 type ShopOrderSummary struct {
 	ID     int64
 	Status OrderStatus
 	Lines  int64
+}
+
+type ShopPageView struct {
+	ID     int64
+	Path   string
+	SeenAt pgtype.Timestamptz
 }

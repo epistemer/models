@@ -81,9 +81,9 @@ column named `order` works. The search is a parenthesized group of
 and `_`, escaped, and is `AND`ed with the filters. `LIMIT` and `OFFSET` are
 written as integers, so both statements take the same arguments. The two
 statements don't share a transaction: under concurrent writes the total and
-the page may disagree, as in zp, but the total is never less than the rows
-already seen. A `nil` filter value is an error, which leaves `IS NULL` free
-for later.
+the page may disagree, as in zp, but when rows come back the total is never
+less than `Offset` plus their number. A `nil` filter value is an error,
+which leaves `IS NULL` free for later.
 
 **D7. Tests** (Claude). `listing.Build` has unit tests on the whole CI
 matrix. The generated file is golden-tested and compiled in `gentest`,

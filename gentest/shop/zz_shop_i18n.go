@@ -48,6 +48,16 @@ var (
 	L10nOrderSummary_Id             = i18n.Key("table.shop_order_summary.OrderSummary_Id", "Id")
 	L10nOrderSummary_Status         = i18n.Key("table.shop_order_summary.OrderSummary_Status", "Status")
 	L10nOrderSummary_Lines          = i18n.Key("table.shop_order_summary.OrderSummary_Lines", "Lines")
+	L10nOrderListView               = i18n.Key("table.shop_order_list_view", "Order List View")
+	L10nOrderListView_Id            = i18n.Key("table.shop_order_list_view.OrderListView_Id", "Id")
+	L10nOrderListView_Status        = i18n.Key("table.shop_order_list_view.OrderListView_Status", "Status")
+	L10nOrderListView_Payment       = i18n.Key("table.shop_order_list_view.OrderListView_Payment", "Payment")
+	L10nOrderListView_Email         = i18n.Key("table.shop_order_list_view.OrderListView_Email", "Email")
+	L10nOrderListView_Order         = i18n.Key("table.shop_order_list_view.OrderListView_Order", "Order")
+	L10nPageView                    = i18n.Key("table.shop_page_view", "Page View")
+	L10nPageView_Id                 = i18n.Key("table.shop_page_view.PageView_Id", "Id")
+	L10nPageView_Path               = i18n.Key("table.shop_page_view.PageView_Path", "Path")
+	L10nPageView_SeenAt             = i18n.Key("table.shop_page_view.PageView_SeenAt", "Seen At")
 )
 
 // l10n holds every label that has a path.
@@ -95,6 +105,16 @@ var l10n = map[string]i18n.TKer{
 	"table.shop_order_summary.id":          L10nOrderSummary_Id,
 	"table.shop_order_summary.status":      L10nOrderSummary_Status,
 	"table.shop_order_summary.lines":       L10nOrderSummary_Lines,
+	"table.shop_order_list_view":           L10nOrderListView,
+	"table.shop_order_list_view.id":        L10nOrderListView_Id,
+	"table.shop_order_list_view.status":    L10nOrderListView_Status,
+	"table.shop_order_list_view.payment":   L10nOrderListView_Payment,
+	"table.shop_order_list_view.email":     L10nOrderListView_Email,
+	"table.shop_order_list_view.order":     L10nOrderListView_Order,
+	"table.shop_page_view":                 L10nPageView,
+	"table.shop_page_view.id":              L10nPageView_Id,
+	"table.shop_page_view.path":            L10nPageView_Path,
+	"table.shop_page_view.seen_at":         L10nPageView_SeenAt,
 }
 
 // L10n returns the label at path, or nil when there is none.

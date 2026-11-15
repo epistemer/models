@@ -68,3 +68,17 @@ CREATE VIEW shop_order_summary AS
   FROM shop_order o LEFT JOIN shop_order_line l ON l.order_id = o.id
   GROUP BY o.id, o.status;
 COMMENT ON VIEW shop_order_summary IS 'Orders at a glance';
+
+-- Listings (interface §4.3): every relation whose name ends in _view gets
+-- a List<Type> method. A view with a nullable enum, a column named like a
+-- keyword (order) and one named id, which sqlc spells ID.
+CREATE VIEW shop_order_list_view AS
+  SELECT o.id, o.status, o.payment, c.email, o.shop_ref AS "order"
+  FROM shop_order o JOIN shop_customer c ON c.id = o.customer_id;
+
+-- A table whose name ends in _view gets one too.
+CREATE TABLE shop_page_view (
+  id bigint PRIMARY KEY,
+  path text NOT NULL,
+  seen_at timestamptz NOT NULL
+);

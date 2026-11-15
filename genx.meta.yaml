@@ -159,6 +159,66 @@ defs: |
     | ($labels | unique("key"; "key") | unique("path"; "path") | unique("var"; "variable")) as $_
     | {enums: [$enums[] | {type, constants}], labels: [$labels[] | del(.src)]};
 
+  # view_type: sqlc's type for a relation whose name ends in _view. sqlc
+  # makes names singular, and of its rules only ^(ox)en ignores the end of
+  # the name (oxen_view is OxView).
+  def view_type: sub("^(?<a>ox)en"; "\(.a)"; "i") | struct_name;
+
+  # The names a views file uses that a query's constant could hide: the
+  # package it imports and the predeclared ones its methods use.
+  def views_names: ["listing", "context", "append", "len", "nil", "int64", "string", "error"];
+
+  # listings: the relations views writes a method for (§4.3), with the
+  # checks of §6 that are views' own. The input is the request; model($p)
+  # has checked it already.
+  def listings:
+    .catalog as $c
+    | [$c.schemas[] | select(.name == $c.default_schema)][0] as $s
+    | [$s.tables[]? | select(.rel.name | endswith("_view"))] as $rels
+    | if ($rels | length) == 0 then []
+      else
+        (if .settings.engine != "postgresql"
+         then error("models: views need PostgreSQL; the request's engine is \(.settings.engine | tojson)")
+         else . end)
+        | [.queries[]? | .name] as $queries
+        | ([$queries[] | {name: ., const: ((.[0:1] | ascii_downcase) + .[1:])}
+            | select(.const | IN(views_names[]))][0]) as $q
+        | if $q != null
+          then error("models: query \($q.name | tojson) gives sqlc the constant \($q.const | tojson), which hides a name the views file uses")
+          else . end
+        | ([$s.enums[]? | select((.name | struct_name) == "Listings")][0]) as $e
+        | if $e != null
+          then error("models: enum \($e.name | tojson) gives sqlc the Go name \"Listings\", which views declares")
+          else . end
+        | [$rels[]
+           | .rel.name as $v
+           | if ($v | test("[^\\x20-\\x7E]"))
+             then error("models: view \($v | tojson): sqlc's Go name for it can't be derived")
+             else . end
+           | if ((.columns // []) | length) == 0
+             then error("models: view \($v | tojson) has no columns")
+             else . end
+           | [.columns[]
+              | .name as $col
+              | if ($col | test("[^\\x20-\\x7E]")) or ($col | struct_name) == ""
+                then error("models: view \($v | tojson) column \($col | tojson): sqlc's Go name for it can't be derived")
+                else . end
+              | {name: $col, field: ($col | struct_name)}] as $cols
+           | ([$cols | group_by(.field)[] | select(length > 1)][0]) as $d
+           | if $d != null
+             then error("models: view \($v | tojson): columns \($d[0].name | tojson) and \($d[1].name | tojson) both give the field \($d[0].field | tojson)")
+             else . end
+           | ($v | view_type) as $type
+           | if "List\($type)" | IN($queries[])
+             then error("models: query \("List\($type)" | tojson) clashes with the listing method of view \($v | tojson)")
+             else . end
+           | {name: $v, type: $type, method: "List\($type)", columns: $cols}] as $views
+        | ([$views | group_by(.type)[] | select(length > 1)][0]) as $twin
+        | if $twin != null
+          then error("models: views \($twin[0].name | tojson) and \($twin[1].name | tojson) both give sqlc the Go type \($twin[0].type | tojson)")
+          else $views end
+      end;
+
   # requests: the one request, if any (§6: never two).
   def request:
     .["sqlc.request/v1"] as $r
@@ -190,3 +250,16 @@ generators:
       | {package: $p.pkg, dir: $p.dir, enums: .enums}
     out: '"\(.dir)/zz_\(.package)_enums.go"'
     template: enums.go.tmpl
+
+  views:
+    doc: a List<Type> method on sqlc's Queries for every relation whose name ends in _view (pgx/v5)
+    needs: [sqlc.request/v1]
+    units: |
+      params as $p
+      | request
+      | model($p) as $_
+      | listings
+      | select(length > 0)
+      | {package: $p.pkg, dir: $p.dir, views: .}
+    out: '"\(.dir)/zz_\(.package)_views.go"'
+    template: views.go.tmpl
