@@ -3,6 +3,31 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-15: listings of views, the design (M5.1)
+
+- **Why now:** v0.1.0 finished the roadmap. zp's business code still
+  needs one thing from models before it can move: a replacement for its
+  view builder (`gen/view`, 38 files call it). The other backlog items
+  wait for a forms package or aren't needed by zp (its `sqlc.yaml` sets no
+  `rename` or `initialisms`, and it uses one schema).
+- **You decided** (2026-11-15): the query is models' own `listing.Query`,
+  a method returns `([]T, int64, error)`, views are the relations whose
+  names end in `_view`, and pgx/v5 only.
+- **Spike S2** (scratch folder, PostgreSQL 16 in a throwaway container):
+  sqlc's request doesn't mark views; `_view` names aren't made singular;
+  pgx v5 encodes `any` filter values by column type (enums, numeric,
+  dates); `CAST(col AS text) ILIKE` with escaping works for every type.
+- **Landed:** [ADR 0005](adr/0005-view-listings.md), roadmap M5, and the
+  [draft of amendment A2](drafts/a2-views.md).
+- **Review 0008** by Gemini 4 Argon (High), about 49k tokens: twelve
+  findings, nine accepted (two in part). Three of its claims about sqlc
+  were wrong when checked, though two still became a refusal and a limit.
+  The real catches: the search's `OR` needed parentheses, or a filter
+  would apply to the last search column only; a query named `Listing`
+  hides the package; a `nil` filter value is now an error.
+- **Waiting on you:** approving A2's text (M5.2): the names `views`,
+  `List<Type>`, `Listings`, and package `listing`'s API.
+
 ## 2026-11-14: v0.1.0 (M4)
 
 - **Landed:** the README with a quickstart (followed in an empty module,

@@ -1,4 +1,4 @@
-# models — Roadmap to the first release
+# models — Roadmap
 
 > Status: **accepted plan**, written 2026-11-14. Module:
 > `github.com/epistemer/models`.
@@ -41,6 +41,7 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 | [M2](#m2--the-generators) | `labels` and `enums`, with tests | M1 |
 | [M3](#m3--an-example-and-zp) | An example app; a comparison with zp | M2 |
 | [M4](#m4--v010) | Docs, the skill, `v0.1.0` | M3 |
+| [M5](#m5--listings-of-views-v020) | zp's view builder as a generator and a runtime package, `v0.2.0` | M4 |
 
 ## Definition of done (every work item)
 
@@ -96,14 +97,27 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 | ☑ | M4.2 | The `models` skill in `~/.claude/skills/models/`, where epistemer keeps the other packages' skills | S | Written against the frozen interface |
 | ☑ | M4.3 | Cross-model review of the release, then CHANGELOG and tag `v0.1.0` | S | Tag pushed |
 
-## After v0.1.0 (backlog)
+## M5 — Listings of views (v0.2.0)
+
+zp's business code can't move before its view builder (`gen/view`) has a
+replacement. The design is [ADR 0005](adr/0005-view-listings.md).
+
+| ✓ | ID | Item | Size | Done when |
+|---|----|------|------|-----------|
+| ☑ | M5.1 | ADR 0005 and this section, after spike S2 (sqlc's names for views, pgx v5's encoding of filter values, the search's SQL) | S | Merged |
+| ☐ | M5.2 | Interface amendment A2 ([draft](drafts/a2-views.md)): the `views` generator, package `listing`, refusals and limits | S | Approved by epistemer and merged into interface.md |
+| ☐ | M5.3 | Package `listing`: `Query` and `Build` | S | Unit tests of every rule of A2's §4.4 and of the SQL, on the whole CI matrix |
+| ☐ | M5.4 | The `views` generator. The shop fixture gains `_view` relations (a table among them, a column named `order`), and `gentest` moves to pgx/v5 | M | Golden files, rendered twice; each refusal has a test; the generated methods run against PostgreSQL in Linux CI (search, every `Op`, sort, paging, the total, an enum filter) |
+| ☐ | M5.5 | `examples/shop` lists a view; zp on a copy gets its 13 methods, and its models package compiles | S | CI green; the zp numbers in ADR 0004 or a new one |
+| ☐ | M5.6 | Docs, the skill, a cross-model review, CHANGELOG and tag `v0.2.0` | S | Tag pushed |
+
+## After v0.2.0 (backlog)
 
 1. Parameters that mirror sqlc's `rename` and `initialisms`, for apps that
    set them (D9).
 2. More than one request, for apps with several databases (D8).
 3. Schemas other than the default one (D8).
-4. Views' query builder: zp's `gen/view`, a runtime library (D13).
-5. Option types, with the package that renders forms (D10).
+4. Option types, with the package that renders forms (D10).
 
 ## Risks
 
