@@ -258,6 +258,66 @@
       "path": "table.shop_order_summary.lines",
       "text": "Lines",
       "var": "L10nOrderSummary_Lines"
+    },
+    {
+      "key": "table.shop_order_list_view",
+      "path": "table.shop_order_list_view",
+      "text": "Order List View",
+      "var": "L10nOrderListView"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Id",
+      "path": "table.shop_order_list_view.id",
+      "text": "Id",
+      "var": "L10nOrderListView_Id"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Status",
+      "path": "table.shop_order_list_view.status",
+      "text": "Status",
+      "var": "L10nOrderListView_Status"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Payment",
+      "path": "table.shop_order_list_view.payment",
+      "text": "Payment",
+      "var": "L10nOrderListView_Payment"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Email",
+      "path": "table.shop_order_list_view.email",
+      "text": "Email",
+      "var": "L10nOrderListView_Email"
+    },
+    {
+      "key": "table.shop_order_list_view.OrderListView_Order",
+      "path": "table.shop_order_list_view.order",
+      "text": "Order",
+      "var": "L10nOrderListView_Order"
+    },
+    {
+      "key": "table.shop_page_view",
+      "path": "table.shop_page_view",
+      "text": "Page View",
+      "var": "L10nPageView"
+    },
+    {
+      "key": "table.shop_page_view.PageView_Id",
+      "path": "table.shop_page_view.id",
+      "text": "Id",
+      "var": "L10nPageView_Id"
+    },
+    {
+      "key": "table.shop_page_view.PageView_Path",
+      "path": "table.shop_page_view.path",
+      "text": "Path",
+      "var": "L10nPageView_Path"
+    },
+    {
+      "key": "table.shop_page_view.PageView_SeenAt",
+      "path": "table.shop_page_view.seen_at",
+      "text": "Seen At",
+      "var": "L10nPageView_SeenAt"
     }
   ],
   "package": {

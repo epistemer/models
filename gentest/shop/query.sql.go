@@ -14,7 +14,7 @@ SELECT id, customer_id, status, payment, shop_ref, address_line2 FROM shop_order
 `
 
 func (q *Queries) GetOrder(ctx context.Context, id int64) (ShopOrder, error) {
-	row := q.db.QueryRowContext(ctx, getOrder, id)
+	row := q.db.QueryRow(ctx, getOrder, id)
 	var i ShopOrder
 	err := row.Scan(
 		&i.ID,
@@ -32,7 +32,7 @@ SELECT order_id, line_no, title FROM shop_order_line WHERE order_id = $1 ORDER B
 `
 
 func (q *Queries) ListOrderLines(ctx context.Context, orderID int64) ([]ShopOrderLine, error) {
-	rows, err := q.db.QueryContext(ctx, listOrderLines, orderID)
+	rows, err := q.db.Query(ctx, listOrderLines, orderID)
 	if err != nil {
 		return nil, err
 	}
@@ -45,9 +45,6 @@ func (q *Queries) ListOrderLines(ctx context.Context, orderID int64) ([]ShopOrde
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -59,7 +56,7 @@ SELECT id, status, lines FROM shop_order_summary
 `
 
 func (q *Queries) OrderSummaries(ctx context.Context) ([]ShopOrderSummary, error) {
-	rows, err := q.db.QueryContext(ctx, orderSummaries)
+	rows, err := q.db.Query(ctx, orderSummaries)
 	if err != nil {
 		return nil, err
 	}
@@ -71,9 +68,6 @@ func (q *Queries) OrderSummaries(ctx context.Context) ([]ShopOrderSummary, error
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

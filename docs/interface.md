@@ -238,9 +238,9 @@ func (q *Queries) ListOrderSummaryView(ctx context.Context, lq listing.Query) ([
 - The rows tell the total, and the count isn't run, when they end the
   listing: `Limit` is 0 or more than the rows returned, and either
   `Offset` is 0 or at least one row came back. The total is then
-  `Offset` plus the number of rows. Otherwise the count runs, and the total
-  is never less than `Offset` plus the rows returned. The two statements
-  share no transaction.
+  `Offset` plus the number of rows. Otherwise the count runs; when rows
+  came back, the total is never less than `Offset` plus their number. The
+  two statements share no transaction.
 - An app embeds `Listings` in its own interface:
   `type Q interface { Querier; Listings }`.
 
@@ -395,7 +395,7 @@ ends in `_view`:
 | Two columns of a `_view` relation with one `structName` (sqlc declares the field twice) | `models: view "dup_view": columns "user_1" and "user1" both give the field "User1"` |
 | Two `_view` relations with one `<Type>` | `models: views "user_1_view" and "user1_view" both give sqlc the Go type "User1View"` |
 | A query whose name, as written, is a method `List<Type>` | `models: query "ListOrderSummaryView" clashes with the listing method of view "order_summary_view"` |
-| A query or enum that gives sqlc the name `Listings`: a query named so, or an enum whose `structName` is it | `models: enum "listings" gives sqlc the Go name "Listings", which views declares` |
+| An enum whose `structName` is `Listings`, the type sqlc would then declare (a query named `Listings` gives a method and the constant `listings`, which don't clash) | `models: enum "listings" gives sqlc the Go name "Listings", which views declares` |
 | A query whose sqlc constant is `listing` (a query named `Listing` or `listing`), which hides the package `listing` | `models: query "Listing" gives sqlc the constant "listing", which views imports as a package` |
 
 genx itself refuses an unknown parameter, a value of the wrong JSON type
@@ -466,3 +466,8 @@ Approved by epistemer on 2026-11-15; the design is
 and package `listing` (§4.4), with their refusals (§6) and limits (§7).
 It changes nothing an app on v0.1.0 writes or gets: `views` runs only when
 switched on. A new generator and package: a minor version, `v0.2.0`.
+
+Clarified while building it (M5.4), by Claude as owner: a query named
+`Listings` isn't refused, since sqlc declares no type for it; and the floor
+on the total (§4.3) holds only when rows came back, so a page past the end
+reports the count.

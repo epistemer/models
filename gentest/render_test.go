@@ -82,6 +82,8 @@ func TestDefaults(t *testing.T) {
 		only(t, render(t, "labels", nil, shopRequest), "models/zz_models.labels.json"))
 	golden(t, "shop-defaults_enums.go.txt",
 		only(t, render(t, "enums", nil, shopRequest), "models/zz_models_enums.go"))
+	golden(t, "shop-defaults_views.go.txt",
+		only(t, render(t, "views", nil, shopRequest), "models/zz_models_views.go"))
 }
 
 // TestDirAndPackage: the files follow dir and package.
@@ -97,6 +99,10 @@ func TestDirAndPackage(t *testing.T) {
 	if !bytes.Contains(enums, []byte("\npackage db\n")) {
 		t.Errorf("enums file isn't in package db:\n%s", enums)
 	}
+	views := only(t, render(t, "views", params, shopRequest), "internal/store/zz_db_views.go")
+	if !bytes.Contains(views, []byte("\npackage db\n")) {
+		t.Errorf("views file isn't in package db:\n%s", views)
+	}
 }
 
 // TestPlain: a schema with no enums gets labels and no enums file.
@@ -107,14 +113,23 @@ func TestPlain(t *testing.T) {
 	if files := render(t, "enums", nil, plain); len(files) != 0 {
 		t.Errorf("enums wrote %v for a schema without enums", names(files))
 	}
+	if files := render(t, "views", nil, plain); len(files) != 0 {
+		t.Errorf("views wrote %v for a schema without _view relations", names(files))
+	}
 }
 
 // request writes a small request with the given schemas and queries, as
 // JSON fragments, and returns it as an input.
 func request(t *testing.T, defaultSchema, schemas, queries string) genxtest.Input {
 	t.Helper()
-	body := fmt.Sprintf(`{"catalog": {"default_schema": %q, "schemas": [%s]}, "queries": [%s]}`,
-		defaultSchema, schemas, queries)
+	return engineRequest(t, "postgresql", defaultSchema, schemas, queries)
+}
+
+// engineRequest is request for another engine.
+func engineRequest(t *testing.T, engine, defaultSchema, schemas, queries string) genxtest.Input {
+	t.Helper()
+	body := fmt.Sprintf(`{"settings": {"engine": %q}, "catalog": {"default_schema": %q, "schemas": [%s]}, "queries": [%s]}`,
+		engine, defaultSchema, schemas, queries)
 	path := filepath.Join(t.TempDir(), "request.json")
 	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
 		t.Fatal(err)
@@ -145,7 +160,7 @@ func enum(name string, values ...string) string {
 // TestNothingToWrite: no request, or a schema that gives no label, writes
 // nothing; an enum with no values still gets its Label().
 func TestNothingToWrite(t *testing.T) {
-	for _, g := range []string{"labels", "enums"} {
+	for _, g := range []string{"labels", "enums", "views"} {
 		if files := render(t, g, nil); len(files) != 0 {
 			t.Errorf("%s with no request wrote %v", g, names(files))
 		}
@@ -194,7 +209,7 @@ func TestNotReservedOutsideASCII(t *testing.T) {
 // TestParamsWithoutRequest: parameters are checked on every run (§3).
 func TestParamsWithoutRequest(t *testing.T) {
 	for _, params := range []map[string]any{{"dir": "models/"}, {"package": "type"}, {"dir": "my models", "package": "models"}} {
-		for _, g := range []string{"labels", "enums"} {
+		for _, g := range []string{"labels", "enums", "views"} {
 			f := &failure{TB: t}
 			genxtest.RenderParams(f, root, g, params)
 			if !strings.Contains(f.msg, "models: parameter") {
@@ -217,7 +232,8 @@ func (f *failure) Fatalf(format string, args ...any) {
 	}
 }
 
-// TestRefusals: every case of interface §6, for both generators.
+// TestRefusals: every case of interface §6 shared by the generators, for
+// each of them.
 func TestRefusals(t *testing.T) {
 	note := func(t *testing.T) []genxtest.Input {
 		return []genxtest.Input{request(t, "public", public(table("note", "id"), enum("kind", "a")), "")}
@@ -295,7 +311,7 @@ func TestRefusals(t *testing.T) {
 			return []genxtest.Input{request(t, "public", public(table("note", "id"), ""), `{"name": "L10nNotes"}`)}
 		}, `models: query "L10nNotes" gives sqlc the Go name "L10nNotes"; names starting with "L10n" are reserved for labels`},
 	} {
-		for _, g := range []string{"labels", "enums"} {
+		for _, g := range []string{"labels", "enums", "views"} {
 			t.Run(c.name+"/"+g, func(t *testing.T) {
 				f := &failure{TB: t}
 				files := genxtest.RenderParams(f, root, g, c.params, c.inputs(t)...)
@@ -307,5 +323,72 @@ func TestRefusals(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// TestViewsNames: sqlc's names for a digit-led relation and a keyword
+// column; a query named Listings declares no type, so it isn't refused; a
+// relation whose name merely contains _view gets nothing.
+func TestViewsNames(t *testing.T) {
+	in := request(t, "public", public(table("1_view", "order", "user_id")+", "+table("view_log", "id")+", "+table("preview", "id"), ""),
+		`{"name": "Listings"}`)
+	got := string(only(t, render(t, "views", nil, in), "models/zz_models_views.go"))
+	for _, want := range []string{
+		"func (q *Queries) List_1View(ctx context.Context, lq listing.Query) ([]_1View, int64, error) {",
+		`listing.Build(lq, "1_view", []string{`,
+		"&i.Order,", "&i.UserID,",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("views file lacks %s:\n%s", want, got)
+		}
+	}
+	for _, unwanted := range []string{"ViewLog", "Preview"} {
+		if strings.Contains(got, unwanted) {
+			t.Errorf("views file has %s:\n%s", unwanted, got)
+		}
+	}
+}
+
+// TestViewsRefusals: the cases of interface §6 that are views' own. labels
+// and enums make none of them.
+func TestViewsRefusals(t *testing.T) {
+	in := func(tables, enums, queries string) func(t *testing.T) genxtest.Input {
+		return func(t *testing.T) genxtest.Input { return request(t, "public", public(tables, enums), queries) }
+	}
+	for _, c := range []struct {
+		name  string
+		input func(t *testing.T) genxtest.Input
+		want  string
+	}{
+		{"another engine", func(t *testing.T) genxtest.Input {
+			return engineRequest(t, "mysql", "public", public(table("order_view", "id"), ""), "")
+		}, `models: views need PostgreSQL; the request's engine is "mysql"`},
+		{"view outside ASCII", in(table("café_view", "id"), "", ""), `models: view "café_view": sqlc's Go name for it can't be derived`},
+		{"column outside ASCII", in(table("order_view", "prénom"), "", ""), `models: view "order_view" column "prénom": sqlc's Go name for it can't be derived`},
+		{"view with no columns", in(table("empty_view"), "", ""), `models: view "empty_view" has no columns`},
+		// zp's casing keeps these apart (Id, ID), so only views sees them.
+		{"two columns, one field", in(table("dup_view", "id", "ID"), "", ""), `models: view "dup_view": columns "id" and "ID" both give the field "ID"`},
+		{"two views, one type", in(table("id_view", "x")+", "+table("ID_view", "x"), "", ""), `models: views "id_view" and "ID_view" both give sqlc the Go type "IDView"`},
+		{"query named like the method", in(table("order_view", "id"), "", `{"name": "ListOrderView"}`), `models: query "ListOrderView" clashes with the listing method of view "order_view"`},
+		{"query with the constant listing", in(table("order_view", "id"), "", `{"name": "Listing"}`), `models: query "Listing" gives sqlc the constant "listing", which views imports as a package`},
+		{"enum named Listings", in(table("order_view", "id"), enum("listings", "a"), ""), `models: enum "listings" gives sqlc the Go name "Listings", which views declares`},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := &failure{TB: t}
+			files := genxtest.RenderParams(f, root, "views", nil, c.input(t))
+			if f.msg == "" {
+				t.Fatalf("no refusal; wrote %v", names(files))
+			}
+			if !strings.Contains(f.msg, c.want) {
+				t.Errorf("message:\n%s\nwant it to contain:\n%s", f.msg, c.want)
+			}
+			for _, g := range []string{"labels", "enums"} {
+				f := &failure{TB: t}
+				genxtest.RenderParams(f, root, g, nil, c.input(t))
+				if f.msg != "" && c.name != "view outside ASCII" && c.name != "column outside ASCII" {
+					t.Errorf("%s refused it too: %s", g, f.msg)
+				}
+			}
+		})
 	}
 }
