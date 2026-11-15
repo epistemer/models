@@ -27,7 +27,8 @@ taken for you, what's next, and what's waiting on you.
   characters are refused; a query constant hiding any name the views file
   uses is refused, not only `listing`. Each refuses only apps whose
   generated code couldn't compile. You can overturn them.
-- **Tagged:** `v0.2.0`.
+- **Tagged:** `v0.2.0` on 2026-11-16, after #12 merged; it resolves
+  through the module proxy.
 - **Next:** v1.0.0 still waits for zp's business code to run on models.
   For views, zp's `view.View` must produce a `listing.Query`, which is the
   future admin-table package's job. The backlog: `rename` and

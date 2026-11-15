@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.2.0 (2026-11-15)
+## v0.2.0 (2026-11-16)
 
 Listings of views, interface amendment A2 (ADR 0005). Nothing changes for an
 app that doesn't switch `views` on.
