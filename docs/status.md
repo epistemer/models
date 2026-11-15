@@ -18,7 +18,7 @@ taken for you, what's next, and what's waiting on you.
   pgx v5 encodes `any` filter values by column type (enums, numeric,
   dates); `CAST(col AS text) ILIKE` with escaping works for every type.
 - **Landed:** [ADR 0005](adr/0005-view-listings.md), roadmap M5, and the
-  [draft of amendment A2](drafts/a2-views.md).
+  draft of amendment A2 (now [interface §11](interface.md#a2-listings-of-views-2026-11-15-for-v020)).
 - **Review 0008** by Gemini 4 Argon (High), about 49k tokens: twelve
   findings, nine accepted (two in part). Three of its claims about sqlc
   were wrong when checked, though two still became a refusal and a limit.

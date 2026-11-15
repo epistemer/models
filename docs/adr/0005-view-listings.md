@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Proposed: D1–D4 accepted by epistemer on 2026-11-15; D5 waits for interface amendment A2's approval; D6–D8 decided by Claude as owner |
+| Status | Accepted: D1–D4 by epistemer on 2026-11-15, D5 with interface amendment A2 on the same day; D6–D8 decided by Claude as owner |
 | Date | 2026-11-15 |
 | Roadmap item | M5.1 |
 | Deciders | epistemer decided D1–D4 (each as recommended, except D3 and D4, where epistemer chose zp's `_view` rule and pgx/v5 only). Claude proposed D5 and decided the rest |
@@ -65,7 +65,7 @@ another `sql_package` gets a compile error in the generated file (a limit,
 interface §7); a request of another engine is refused when it has a
 `_view` relation.
 
-**D5. Names** (proposed in amendment A2, for epistemer's approval): a third
+**D5. Names** (approved by epistemer with amendment A2): a third
 generator, `views`, writing `<dir>/zz_<package>_views.go`; a method
 `List<Type>` per relation (`ListOrderSummaryView`); an interface
 `Listings` with every such method, for an app's own interface next to
