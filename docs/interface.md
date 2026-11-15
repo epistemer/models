@@ -1,24 +1,25 @@
 # models — Developer Interface (v1, locked)
 
 > Status: **locked by epistemer on 2026-11-14** (roadmap M1.5). Any change
-> needs an amendment, recorded in §11. This document covers what an app writes and what it gets
-> back; why it is so is in [ADR 0001](adr/0001-models-on-sqlc.md) and
-> [ADR 0002](adr/0002-spike-s1-zp-labels.md).
+> needs an amendment, recorded in §11 (A1, A2). This document covers what
+> an app writes and what it gets back; why it is so is in
+> [ADR 0001](adr/0001-models-on-sqlc.md), [ADR 0002](adr/0002-spike-s1-zp-labels.md)
+> and, for `views`, [ADR 0005](adr/0005-view-listings.md).
 
 ## 0. Decisions
 
 | # | Decision | Choice |
 |---|----------|--------|
-| D1 | What it is | Two trivial generators (genx) over sqlc's codegen request. No program, no API at run time |
+| D1 | What it is | Three trivial generators (genx) over sqlc's codegen request, and one runtime package, `listing`, for the code `views` generates (A2). No program |
 | D2 | App's choices | genx parameters (genx amendment A4): `dir`, `package`, `table_prefix` (§3) |
-| D3 | Generators | `labels` writes a `labels/v1` file; `enums` writes `Label()` for every enum type (§4) |
+| D3 | Generators | `labels` writes a `labels/v1` file; `enums` writes `Label()` for every enum type; `views` writes a `List<Type>` method for every relation whose name ends in `_view` (§4) |
 | D4 | Keys | zp's: `enum.<enum>.<value>`, `table.<table>`, `table.<table>.<T>_<C>` (§5.2) |
 | D5 | Paths | The names in SQL: `enum.<enum>.<value>`, `table.<table>`, `table.<table>.<column>` (§5.2) |
 | D6 | Variables | `L10n<Const>` for an enum value (`<Const>` is sqlc's constant), `L10n<T>` and `L10n<T>_<C>` for tables and columns (§5.2) |
 | D7 | English text | The SQL comment, else the name made readable; an enum value is itself (§5.3) |
 | D8 | Scope | The request's default schema, one request per app, sqlc's default naming options (§7) |
 | D9 | Versions | genx `v0.2.0` or later, i18n `v0.2.0` or later, sqlc requests of `v1.29.0`'s shape (`sqlc.request/v1`) |
-| D10 | Module path | `github.com/epistemer/models`, package `models`, with only the metafile, its templates and a `doc.go` |
+| D10 | Module path | `github.com/epistemer/models`, package `models`, with only the metafile, its templates and a `doc.go`; package `listing` (§4.4) |
 
 ## 1. Principles
 
@@ -72,7 +73,7 @@ producers:
         domain: sqlc.request/v1
 use:
   - github.com/epistemer/models:
-      generators: [labels, enums]
+      generators: [labels, enums, views]
       params:
         table_prefix: app_
   - github.com/epistemer/i18n: [labels]
@@ -80,7 +81,8 @@ use:
 
 The list form, `- github.com/epistemer/models: [labels, enums]`, uses every
 default. `enums` needs `labels` and i18n's `labels`: its methods return the
-variables those two declare. `labels` works alone.
+variables those two declare. `labels` works alone, and so does `views`,
+which needs sqlc's `sql_package: "pgx/v5"` (§7).
 
 **A blank import**, so the module stays required and genx can find the
 metafile (genx ADR 0003). The file goes in any package of the app and
@@ -125,16 +127,18 @@ Declared in models' metafile and set on its `use` entry (genx A4).
 |-----------|-------|--------|
 | `labels` | the one `sqlc.request/v1` file | `<dir>/zz_<package>.labels.json`, a `labels/v1` file |
 | `enums` | the one `sqlc.request/v1` file | `<dir>/zz_<package>_enums.go` |
+| `views` | the one `sqlc.request/v1` file | `<dir>/zz_<package>_views.go` |
 
 With no request, neither writes anything. When the default schema gives no
 label at all (no table or view, and no enum value), `labels` writes
-nothing; with no enum type, `enums` writes nothing. Nothing empty is ever
+nothing; with no enum type, `enums` writes nothing; with no relation whose name
+ends in `_view`, `views` writes nothing. Nothing empty is ever
 written, because i18n would turn an empty labels file into Go with an
 unused import. An enum with no values still gets its `Label()`, which
 always returns nil.
 
-Both generators make every check of §6, so `enums` run without `labels`
-refuses what `labels` would.
+All three make every check of §6 that isn't marked as `views`' own, so
+`enums` or `views` run without `labels` refuses what `labels` would.
 
 i18n's `labels` then writes `<dir>/zz_<package>_i18n.go`, which declares
 every label's variable and `L10n(path)`.
@@ -192,6 +196,120 @@ func (t OrderStatus) Label() i18n.TKer {
   `All<Type>Values()` (`emit_all_enum_values`).
 - `i18n.TKer` is what i18n's `Key` returns; it renders with
   `.T(ctx)` and names its key with `.K()`.
+
+### 4.3 The views file
+
+Every table or view of the default schema whose SQL name ends in `_view`,
+in the request's order, gets a method on sqlc's `Queries`. `<Type>` is
+sqlc's type for the relation, `structName` of its name (a name ending in
+`_view` isn't made singular; one starting with a digit gets sqlc's `_`,
+as in `_1View`); each field is `structName` of a column's name. For a view `order_summary_view`:
+
+```go
+// Code generated from sqlc's request by github.com/epistemer/models. DO NOT EDIT.
+
+package models
+
+import (
+	"context"
+
+	"github.com/epistemer/models/listing"
+)
+
+// Listings is the listing methods of Queries, one per view.
+type Listings interface {
+	ListOrderSummaryView(ctx context.Context, lq listing.Query) ([]OrderSummaryView, int64, error)
+}
+
+var _ Listings = (*Queries)(nil)
+
+// ListOrderSummaryView returns the rows of order_summary_view that lq
+// selects, and how many rows its search and filters match.
+func (q *Queries) ListOrderSummaryView(ctx context.Context, lq listing.Query) ([]OrderSummaryView, int64, error) {
+	rowsSQL, countSQL, args, err := listing.Build(lq, "order_summary_view",
+		[]string{"id", "status", "total", "placed", "note"})
+	// … runs rowsSQL through q.db (pgx/v5's DBTX), scanning each row into
+	// &i.ID, &i.Status, &i.Total, &i.Placed, &i.Note; then countSQL, when
+	// the rows can't tell the total.
+}
+```
+
+- An error from `listing.Build` returns before any query runs.
+- The rows tell the total, and the count isn't run, when they end the
+  listing: `Limit` is 0 or more than the rows returned, and either
+  `Offset` is 0 or at least one row came back. The total is then
+  `Offset` plus the number of rows. Otherwise the count runs, and the total
+  is never less than `Offset` plus the rows returned. The two statements
+  share no transaction.
+- An app embeds `Listings` in its own interface:
+  `type Q interface { Querier; Listings }`.
+
+### 4.4 Package listing
+
+`github.com/epistemer/models/listing`, no dependencies:
+
+```go
+// Query selects a page of a view's rows.
+type Query struct {
+	Search   string   // rows where a SearchIn column, as text, contains it, case ignored
+	SearchIn []string // column names; needed when Search isn't ""
+	Filters  []Filter // every one must hold
+	Sort     []Sort   // in order
+	Limit    int      // 0: no limit
+	Offset   int
+}
+
+type Filter struct {
+	Column string
+	Op     Op
+	Value  any // passed to the driver, which encodes it by the column's type
+}
+
+type Op string
+
+const (
+	Eq Op = "="
+	Ne Op = "<>"
+	Lt Op = "<"
+	Le Op = "<="
+	Gt Op = ">"
+	Ge Op = ">="
+)
+
+type Sort struct {
+	Column string
+	Desc   bool
+}
+
+// Build returns the statement for a page of relation's rows and the
+// statement counting the rows that match, with their arguments. For
+// generated code.
+func Build(q Query, relation string, columns []string) (rows, count string, args []any, err error)
+
+// ErrQuery is wrapped by every error of Build.
+var ErrQuery = errors.New("listing: bad query")
+```
+
+- Column names are SQL names and must be among `columns`, in `SearchIn`
+  too when `Search` is `""`; a name that isn't is an error naming it. So is
+  a `Search` with no `SearchIn` or holding a NUL, an `Op` not listed
+  above, a `nil` `Value` (untyped, or a nil pointer, slice, map, channel,
+  function or interface; kept free for a later `IS NULL`), a negative
+  `Limit` or `Offset`, an empty `relation` or `columns`, a column listed
+  twice in `columns`, and a name holding a NUL. A non-nil value that the
+  driver encodes as NULL (`pgtype.Text{}`) matches nothing.
+- `ErrQuery` covers the query's shape only. A value its column can't take
+  (`"bogus"` for an enum, `"x"` for a date) fails in pgx or PostgreSQL;
+  the caller converts values by the column's type first.
+- The search matches PostgreSQL's text form of a value: an enum's SQL
+  value, not its label; a timestamp in the session's time zone.
+- `Limit` and `Offset` page by `Sort`, so stable pages need a `Sort` ending
+  on a column that is unique in the view.
+- The SQL is ADR 0005's D6: every identifier double-quoted with `"`
+  doubled; the search a parenthesized group of `CAST(c AS text) ILIKE $n
+  ESCAPE '\'` joined by `OR`, its text with `\`, then `%` and `_`,
+  escaped; filters `AND`ed with it; `LIMIT` and `OFFSET` as integers. Its
+  exact text isn't part of the contract.
 
 ## 5. Labels
 
@@ -266,6 +384,20 @@ the contract; their wording may get clearer without an amendment.
 | Two enums with one Go type, `structName` of their names (A1) | `models: enum "user1" and enum "user_1" both give sqlc the Go type "User1"` |
 | A table, view, enum or query of the default schema whose Go name in sqlc starts with `L10n`, which could clash with a variable: `structName` of its SQL name (sqlc may make a table's name singular, which doesn't change its start) | `models: table "l10n_note" gives sqlc the Go name "L10nNote"; names starting with "L10n" are reserved for labels` |
 
+Made by `views` only (A2), and only when the request has a relation whose name
+ends in `_view`:
+
+| Case | Example message |
+|------|-----------------|
+| The request's engine isn't `postgresql` | `models: views need PostgreSQL; the request's engine is "mysql"` |
+| A `_view` relation or one of its columns has a name with a character outside ASCII, or whose `structName` is empty | `models: view "café_view": sqlc's Go name for it can't be derived` |
+| A `_view` relation with no columns | `models: view "empty_view" has no columns` |
+| Two columns of a `_view` relation with one `structName` (sqlc declares the field twice) | `models: view "dup_view": columns "user_1" and "user1" both give the field "User1"` |
+| Two `_view` relations with one `<Type>` | `models: views "user_1_view" and "user1_view" both give sqlc the Go type "User1View"` |
+| A query whose name, as written, is a method `List<Type>` | `models: query "ListOrderSummaryView" clashes with the listing method of view "order_summary_view"` |
+| A query or enum that gives sqlc the name `Listings`: a query named so, or an enum whose `structName` is it | `models: enum "listings" gives sqlc the Go name "Listings", which views declares` |
+| A query whose sqlc constant is `listing` (a query named `Listing` or `listing`), which hides the package `listing` | `models: query "Listing" gives sqlc the constant "listing", which views imports as a package` |
+
 genx itself refuses an unknown parameter, a value of the wrong JSON type
 (genx A4), and an output path its §7 rejects.
 
@@ -283,6 +415,12 @@ a refusal, or a method nothing calls; never in a wrong key.
 | `out` or `package` in `gen: go:` that differ from `dir` and `package` | models' files land in another directory or package: `zz_<package>_enums.go` doesn't compile there, and labels sit apart from the models |
 | A second `sql:` block whose request is also declared in `genx.yaml` | Refused (§6). One whose request isn't declared is never seen |
 | Tables or enums in another schema | Refused (§6) |
+| `sql_package` other than `pgx/v5` | `zz_<package>_views.go` doesn't compile: sqlc's `DBTX` has no `Query` |
+| `rename`, a non-default `initialisms` or `emit_exact_table_names` that change a `_view` relation's type or a field's name | `zz_<package>_views.go` doesn't compile: `undefined: <Type>` or `has no field` |
+| `omit_unused_structs: true` and no query uses the view | `undefined: <Type>` |
+| A column `overrides` entry | The field has the override's type; it scans if that type can scan the column |
+| `emit_methods_with_db_argument: true` | `Queries` has no `db`: `zz_<package>_views.go` doesn't compile |
+| A table whose sqlc type is `Listings` (sqlc's singular of its name, which models can't compute) | `Listings redeclared` |
 
 ## 8. Testing an app
 
@@ -294,8 +432,8 @@ a refusal, or a method nothing calls; never in a wrong key.
 ## 9. Not in v1
 
 Parameters that mirror sqlc's `rename` and `initialisms`; several requests
-or schemas; labels for an enum type itself; option lists for forms; views'
-query builder (zp's `gen/view`). The roadmap's backlog orders them.
+or schemas; labels for an enum type itself; option lists for forms. The
+roadmap's backlog orders them.
 
 ## 10. What a change to this document means
 
@@ -320,3 +458,11 @@ Claude as owner before any release; it can be overturned.
 
 `dir`'s element rules (§3, genx §7) are now also checked by models itself,
 so a bad `dir` is refused on runs that write nothing, as §3 says.
+
+### A2. Listings of views (2026-11-15, for v0.2.0)
+
+Approved by epistemer on 2026-11-15; the design is
+[ADR 0005](adr/0005-view-listings.md). A third generator, `views` (§4.3),
+and package `listing` (§4.4), with their refusals (§6) and limits (§7).
+It changes nothing an app on v0.1.0 writes or gets: `views` runs only when
+switched on. A new generator and package: a minor version, `v0.2.0`.
