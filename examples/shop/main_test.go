@@ -10,7 +10,7 @@ import (
 )
 
 // TestGenerated fails when a generated file is stale: sqlc's models and
-// request (through sqlc diff), models' labels and enums, i18n's Go.
+// request (through sqlc diff), models' labels, enums and views, i18n's Go.
 func TestGenerated(t *testing.T) { genxtest.AssertGenerated(t) }
 
 // TestTranslated: a translation typed into the running app shows through

@@ -49,3 +49,23 @@ worked as designed.
 
 - zp's move needs no key change, as planned (ADR 0002's consequences).
 - M3.1's example and the README quickstart can show interface §2 as is.
+
+## Addendum: views (M5.5, 2026-11-15)
+
+The same scratch module, with zp's current `schema/` and `sql/`, sqlc's
+`sql_package: pgx/v5` (zp's own), and `views` switched on:
+
+| Check | Result |
+|-------|--------|
+| Methods | **13**, one per type of zp's whose name ends in `View`: the same 13 types |
+| Columns | All 13 select the same columns, in the same order, as zp's `gen/view` output |
+| Refusals | None |
+| Compile | The models package, with the views file, passes `go vet` |
+| Labels | Unchanged: 995 |
+| `go tool genx`, warm | 1.9 s, as before; sqlc still takes most of it |
+
+zp's move for views: `q.View<Base>(ctx, v)` becomes
+`q.List<Base>View(ctx, query)`, where zp's `view.View` (later, the admin
+table package) produces the `listing.Query`; `ViewResult`'s channels become
+a slice; zp's `Q` embeds `Listings`; `gen/view` and `models/view_result.go`
+go.

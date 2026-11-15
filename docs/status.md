@@ -3,6 +3,38 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-15: v0.2.0, listings of views (M5.2–M5.6)
+
+- **You approved** amendment A2; it is in interface.md (§4.3, §4.4, §6,
+  §7, §11).
+- **Landed:** package `listing` ([#10](https://github.com/epistemer/models/pull/10)),
+  the `views` generator ([#11](https://github.com/epistemer/models/pull/11)),
+  and the example's listing, the docs and the skill (M5.5, M5.6). A new CI
+  job runs the generated methods against PostgreSQL 16 on Linux.
+- **zp on a copy** (ADR 0004's addendum): its 13 views get the same 13
+  types with the same columns, in the same order, as zp's `gen/view`;
+  nothing refused; the models package compiles; warm run 1.9 s.
+- **Reviews:** 0009 by Gemini 4 Argon (Medium), about 20k tokens (a typed
+  nil got past the nil check); 0010 by Argon (Medium), about 80k tokens
+  (sqlc makes `oxen_view` `OxView`; a query named `Max` hid a builtin);
+  0011 by Gemini 3.8 Flash (High), about 178k tokens, on the docs and the
+  skill (the skill's example used columns its view lacks; `Querier` needs
+  `emit_interface`). The PostgreSQL test also caught a bug of mine: past
+  the last page, the total was the offset.
+- **Decided for you,** as clarifications under A2 (interface §11): a query
+  named `Listings` isn't refused (it declares no type); the total's floor
+  holds only when rows came back; `oxen` names follow sqlc; control
+  characters are refused; a query constant hiding any name the views file
+  uses is refused, not only `listing`. Each refuses only apps whose
+  generated code couldn't compile. You can overturn them.
+- **Tagged:** `v0.2.0`.
+- **Next:** v1.0.0 still waits for zp's business code to run on models.
+  For views, zp's `view.View` must produce a `listing.Query`, which is the
+  future admin-table package's job. The backlog: `rename` and
+  `initialisms` parameters, several requests or schemas, option types with
+  the forms package, and `IN`/`IS NULL` filters if an app needs them.
+- **Waiting on you:** nothing.
+
 ## 2026-11-15: listings of views, the design (M5.1)
 
 - **Why now:** v0.1.0 finished the roadmap. zp's business code still

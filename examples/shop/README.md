@@ -6,13 +6,20 @@ by genx. It is interface §2 as an app writes it:
 | File | What it is |
 |------|------------|
 | [sqlc.yaml](sqlc.yaml) | sqlc's config: Go models and the request as JSON, both into `models/` |
-| [genx.yaml](genx.yaml) | sqlc as a producer, then `labels` and `enums` with `table_prefix: shop_`, then i18n's `labels` |
+| [genx.yaml](genx.yaml) | sqlc as a producer, then `labels`, `enums` and `views` with `table_prefix: shop_`, then i18n's `labels` |
 | [tools.go](tools.go) | The blank imports that keep models and i18n required |
-| [main.go](main.go) | Prints labels; its `go:generate` runs genx |
+| [db/schema.sql](db/schema.sql) | The schema; `shop_order_list_view` ends in `_view`, so it gets `ListShopOrderListView` |
+| [main.go](main.go) | Prints labels and, with `DATABASE_URL` set, a page of paid orders through the listing; its `go:generate` runs genx |
 | [main_test.go](main_test.go) | `genx check` from a test, and a translation shown through the labels |
 
 ```bash
 go generate ./... && go run .
+```
+
+With a PostgreSQL database that holds [db/schema.sql](db/schema.sql):
+
+```bash
+DATABASE_URL=postgres://localhost/shop go run .
 ```
 
 The module requires models through a `replace` to the repository's root,

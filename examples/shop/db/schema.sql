@@ -15,3 +15,10 @@ CREATE TABLE shop_order (
   status order_status NOT NULL DEFAULT 'pending',
   placed_at timestamptz NOT NULL
 );
+
+-- Its name ends in _view, so models' views generator gives it a listing
+-- method, ListShopOrderListView.
+CREATE VIEW shop_order_list_view AS
+  SELECT o.id, o.status, o.placed_at, c.email
+  FROM shop_order o JOIN shop_customer c ON c.id = o.customer_id;
+COMMENT ON VIEW shop_order_list_view IS 'Orders';
