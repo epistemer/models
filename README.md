@@ -2,15 +2,25 @@
 
 neozp's generators for database models that [sqlc](https://sqlc.dev)
 generates. sqlc writes the Go models; models adds a translatable label for
-every enum value, table, view and column, and a `Label()` method on every
-enum type. It is two trivial generators run by
-[genx](https://github.com/epistemer/genx), with no program and no API at run
-time; [i18n](https://github.com/epistemer/i18n) turns the labels into Go.
+every enum value, table, view and column, a `Label()` method on every enum
+type, and a paged, searchable listing method for every view whose name ends
+in `_view`. It is three trivial generators run by
+[genx](https://github.com/epistemer/genx), plus a small runtime package,
+`listing`; [i18n](https://github.com/epistemer/i18n) turns the labels into
+Go.
 
 ```go
 status.Label().T(ctx)                              // "paid", or its translation
 models.L10nOrder_Status.T(ctx)                     // a column's label
 models.L10n("table.shop_order.status").T(ctx)      // the same, by SQL name
+
+// import "github.com/epistemer/models/listing"
+rows, total, err := q.ListShopOrderListView(ctx, listing.Query{  // a page of a view
+	Search: "ann", SearchIn: []string{"email"},
+	Filters: []listing.Filter{{Column: "status", Op: listing.Eq, Value: models.OrderStatusPaid}},
+	Sort:    []listing.Sort{{Column: "placed_at", Desc: true}, {Column: "id"}},
+	Limit:   20,
+})
 ```
 
 ## Quickstart: an app on sqlc
@@ -59,11 +69,25 @@ producers:
         domain: sqlc.request/v1
 use:
   - github.com/epistemer/models:
-      generators: [labels, enums]
+      generators: [labels, enums, views]
       params:
-        table_prefix: shop_   # if your tables carry one; else use [labels, enums]
+        table_prefix: shop_   # if your tables carry one; else use [labels, enums, views]
   - github.com/epistemer/i18n: [labels]
 ```
+
+`views` needs sqlc's `sql_package: "pgx/v5"`; leave it out of the list if
+the app has no view whose name ends in `_view`, or uses another driver.
+
+**Listings.** A `listing.Query` names columns by their SQL names; an
+unknown one, a search with no `SearchIn`, a nil filter value or a negative
+limit returns an error wrapping `listing.ErrQuery` (a bad request) before
+any SQL runs. A value its column can't take, like `"bogus"` for an enum,
+fails in pgx or PostgreSQL instead, so convert values by column type first.
+A non-nil value that encodes as NULL (`pgtype.Text{}`) matches nothing. For
+stable pages, end `Sort` on a column unique in the view, such as `id`.
+To embed the listing methods in your own interface next to sqlc's
+`Querier`, set sqlc's `emit_interface: true`:
+`type Q interface { models.Querier; models.Listings }`.
 
 `table_prefix` is removed from table and column names in variables,
 English text and column keys, so set it before translations exist. If
@@ -93,9 +117,10 @@ go tool genx
 go mod tidy
 ```
 
-genx runs sqlc, then models' `labels` and `enums`, then i18n's `labels`,
-and writes `models/zz_models.labels.json`, `models/zz_models_enums.go` and
-`models/zz_models_i18n.go`. Commit them with `codegen_request.json` and
+genx runs sqlc, then models' `labels`, `enums` and `views`, then i18n's
+`labels`, and writes `models/zz_models.labels.json`,
+`models/zz_models_enums.go`, `models/zz_models_views.go` (when a view's name
+ends in `_view`) and `models/zz_models_i18n.go`. Commit them with `codegen_request.json` and
 `genx.lock`. To regenerate from `go generate`, put
 `//go:generate go tool genx` in a file of any package genx doesn't write
 into, and not in the `//go:build genx` file, which `go generate` skips.
@@ -117,6 +142,7 @@ People then translate the labels in the running app; see i18n.
 | enum `order_status`, value `paid` | `enum.order_status.paid` | `L10nOrderStatusPaid` | `enum.order_status.paid` |
 | table `shop_order` | `table.shop_order` | `L10nOrder` | `table.shop_order` |
 | its column `customer_id` | `table.shop_order.Order_CustomerId` | `L10nOrder_CustomerId` | `table.shop_order.customer_id` |
+| view `shop_order_list_view` | `table.shop_order_list_view` | `L10nOrderListView`; method `ListShopOrderListView` | `table.shop_order_list_view` |
 
 The English text is the SQL comment, else the name made readable. Keys are
 permanent, and changing `table_prefix` changes column keys. Names that
@@ -129,7 +155,7 @@ refusal and limit.
 | Document | Answers |
 |----------|---------|
 | [docs/interface.md](docs/interface.md) | The contract: what an app writes and gets back (locked) |
-| [docs/adr/](docs/adr/) | Why: the design (0001), the zp spike (0002), the test module (0003), zp on v0 (0004) |
+| [docs/adr/](docs/adr/) | Why: the design (0001), the zp spike (0002), the test module (0003), zp on models (0004), listings of views (0005) |
 | [docs/roadmap.md](docs/roadmap.md) | The plan, with a done-when for each item |
 | [docs/status.md](docs/status.md) | The log of working sessions |
 | [CHANGELOG.md](CHANGELOG.md) | Releases |
