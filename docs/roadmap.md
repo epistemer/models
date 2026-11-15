@@ -109,7 +109,7 @@ replacement. The design is [ADR 0005](adr/0005-view-listings.md).
 | ☑ | M5.3 | Package `listing`: `Query` and `Build` | S | Unit tests of every rule of A2's §4.4 and of the SQL, on the whole CI matrix |
 | ☑ | M5.4 | The `views` generator. The shop fixture gains `_view` relations (a table among them, a column named `order`), and `gentest` moves to pgx/v5 | M | Golden files, rendered twice; each refusal has a test; the generated methods run against PostgreSQL in Linux CI (search, every `Op`, sort, paging, the total, an enum filter) |
 | ☑ | M5.5 | `examples/shop` lists a view; zp on a copy gets its 13 methods, and its models package compiles | S | CI green; the zp numbers in ADR 0004 or a new one |
-| ☐ | M5.6 | Docs, the skill, a cross-model review, CHANGELOG and tag `v0.2.0` | S | Tag pushed |
+| ☑ | M5.6 | Docs, the skill, a cross-model review, CHANGELOG and tag `v0.2.0` | S | Tag pushed |
 
 ## After v0.2.0 (backlog)
 
