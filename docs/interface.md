@@ -1,7 +1,7 @@
 # models — Developer Interface (v1, locked)
 
 > Status: **locked by epistemer on 2026-11-14** (roadmap M1.5). Any change
-> needs an amendment, recorded in §11 (A1, A2). This document covers what
+> needs an amendment, recorded in §11 (A1, A2, A3). This document covers what
 > an app writes and what it gets back; why it is so is in
 > [ADR 0001](adr/0001-models-on-sqlc.md), [ADR 0002](adr/0002-spike-s1-zp-labels.md)
 > and, for `views`, [ADR 0005](adr/0005-view-listings.md).
@@ -10,16 +10,16 @@
 
 | # | Decision | Choice |
 |---|----------|--------|
-| D1 | What it is | Three trivial generators (genx) over sqlc's codegen request, and one runtime package, `listing`, for the code `views` generates (A2). No program |
+| D1 | What it is | Three trivial generators (genx) over sqlc's codegen request, and two runtime packages: `listing`, for the code `views` generates (A2), and `option` (A3). No program |
 | D2 | App's choices | genx parameters (genx amendment A4): `dir`, `package`, `table_prefix` (§3) |
-| D3 | Generators | `labels` writes a `labels/v1` file; `enums` writes `Label()` for every enum type; `views` writes a `List<Type>` method for every relation whose name ends in `_view` (§4) |
+| D3 | Generators | `labels` writes a `labels/v1` file; `enums` writes `Label()`, `Value()` and `All<Type>Options()` for every enum type (A3); `views` writes a `List<Type>` method for every relation whose name ends in `_view` (§4) |
 | D4 | Keys | zp's: `enum.<enum>.<value>`, `table.<table>`, `table.<table>.<T>_<C>` (§5.2) |
 | D5 | Paths | The names in SQL: `enum.<enum>.<value>`, `table.<table>`, `table.<table>.<column>` (§5.2) |
 | D6 | Variables | `L10n<Const>` for an enum value (`<Const>` is sqlc's constant), `L10n<T>` and `L10n<T>_<C>` for tables and columns (§5.2) |
 | D7 | English text | The SQL comment, else the name made readable; an enum value is itself (§5.3) |
 | D8 | Scope | The request's default schema, one request per app, sqlc's default naming options (§7) |
 | D9 | Versions | genx `v0.2.0` or later, i18n `v0.2.0` or later, sqlc requests of `v1.29.0`'s shape (`sqlc.request/v1`) |
-| D10 | Module path | `github.com/epistemer/models`, package `models`, with only the metafile, its templates and a `doc.go`; package `listing` (§4.4) |
+| D10 | Module path | `github.com/epistemer/models`, package `models`, with only the metafile, its templates and a `doc.go`; packages `listing` (§4.4) and `option` (§4.5) |
 
 ## 1. Principles
 
@@ -173,7 +173,10 @@ order. genx writes object keys sorted, as above, and indents its own way.
 
 package models
 
-import "github.com/epistemer/i18n"
+import (
+	"github.com/epistemer/i18n"
+	"github.com/epistemer/models/option"
+)
 
 // Label returns the label of t, or nil when t isn't a value of OrderStatus.
 func (t OrderStatus) Label() i18n.TKer {
@@ -187,13 +190,30 @@ func (t OrderStatus) Label() i18n.TKer {
 	}
 	return nil
 }
+
+// Value returns t as a string, for option.SelectOption.
+func (t OrderStatus) Value() string { return string(t) }
+
+// AllOrderStatusOptions returns every value of OrderStatus, in the
+// schema's order, as select options.
+func AllOrderStatusOptions() []option.SelectOption {
+	return []option.SelectOption{
+		OrderStatusPending,
+		OrderStatusPaid,
+		OrderStatusShipped,
+	}
+}
 ```
 
-- One method per enum type, in the order of §4.1, on the type sqlc declares
-  and with sqlc's constants. Nothing else is declared.
+- For each enum type, in the order of §4.1, on the type sqlc declares and
+  with sqlc's constants: `Label()`, `Value()` (A3) and
+  `All<Type>Options()` (A3). Nothing else is declared. Every enum value is
+  an `option.SelectOption` (§4.5).
+- `All<Type>Options()` returns a new slice on every call; an enum with no
+  values returns an empty one.
 - `Null<Type>` gets no method: call `n.<Type>.Label()` when `n.Valid`.
-- The value's string is `string(t)`; the list of values is sqlc's
-  `All<Type>Values()` (`emit_all_enum_values`).
+- The value's string is `string(t)`, also `t.Value()`; the list of values
+  is sqlc's `All<Type>Values()` (`emit_all_enum_values`).
 - `i18n.TKer` is what i18n's `Key` returns; it renders with
   `.T(ctx)` and names its key with `.K()`.
 
@@ -220,14 +240,15 @@ import (
 
 // Listings is the listing methods of Queries, one per view.
 type Listings interface {
-	ListOrderSummaryView(ctx context.Context, lq listing.Query) ([]OrderSummaryView, int64, error)
+	ListOrderSummaryView(ctx context.Context, src listing.Source) ([]OrderSummaryView, int64, error)
 }
 
 var _ Listings = (*Queries)(nil)
 
 // ListOrderSummaryView returns the rows of order_summary_view
-// that lq selects, and how many rows its search and filters match.
-func (q *Queries) ListOrderSummaryView(ctx context.Context, lq listing.Query) ([]OrderSummaryView, int64, error) {
+// that src selects, and how many rows its search and filters match.
+func (q *Queries) ListOrderSummaryView(ctx context.Context, src listing.Source) ([]OrderSummaryView, int64, error) {
+	lq := src.ListingQuery()
 	rowsSQL, countSQL, args, err := listing.Build(lq, "order_summary_view",
 		[]string{"id", "status", "total", "placed", "note"})
 	// … runs rowsSQL through q.db (pgx/v5's DBTX), scanning each row into
@@ -236,6 +257,10 @@ func (q *Queries) ListOrderSummaryView(ctx context.Context, lq listing.Query) ([
 }
 ```
 
+- `src` is a `listing.Source` (A3): a `listing.Query` value, or a table
+  package's own type. It is read once, and must not be nil (a nil `src`
+  panics). A filter on an enum column takes the enum value, or an
+  `option.SelectOption`'s `Value()`, not the option itself.
 - An error from `listing.Build` returns before any query runs.
 - The rows tell the total, and the count isn't run, when they end the
   listing: `Limit` is 0 or more than the rows returned, and either
@@ -248,7 +273,8 @@ func (q *Queries) ListOrderSummaryView(ctx context.Context, lq listing.Query) ([
 
 ### 4.4 Package listing
 
-`github.com/epistemer/models/listing`, no dependencies:
+`github.com/epistemer/models/listing`, no dependencies outside the
+standard library:
 
 ```go
 // Query selects a page of a view's rows.
@@ -290,6 +316,24 @@ func Build(q Query, relation string, columns []string) (rows, count string, args
 
 // ErrQuery is wrapped by every error of Build.
 var ErrQuery = errors.New("listing: bad query")
+
+// Source gives the query of a listing (A3). Query implements it; so can a
+// table package's own type.
+type Source interface {
+	ListingQuery() Query
+}
+
+// ListingQuery returns q, so a Query is its own Source.
+func (q Query) ListingQuery() Query
+
+// Labeler gives the text for the id a link column is filtered by, such as
+// a customer's name for its id, and false when there is no such row. A
+// table calls it once per link filter of a request, to show the chosen
+// value; rows carry their own text through the view's joins (A3).
+// Apps implement it; table packages call it. models generates none.
+type Labeler interface {
+	LabelOf(ctx context.Context, id string) (string, bool, error)
+}
 ```
 
 - Column names are SQL names and must be among `columns`, in `SearchIn`
@@ -312,6 +356,23 @@ var ErrQuery = errors.New("listing: bad query")
   ESCAPE '\'` joined by `OR`, its text with `\`, then `%` and `_`,
   escaped; filters `AND`ed with it; `LIMIT` and `OFFSET` as integers. Its
   exact text isn't part of the contract.
+
+### 4.5 Package option
+
+`github.com/epistemer/models/option` (A3), which imports only i18n:
+
+```go
+// SelectOption is one choice of a select input or a table's filter: the
+// value sent and stored, and its label for people. Every enum value
+// implements it (§4.2).
+type SelectOption interface {
+	Value() string
+	Label() i18n.TKer
+}
+```
+
+models owns this interface, and the form and table packages consume it,
+so models depends on neither (ADR 0006).
 
 ## 5. Labels
 
@@ -400,6 +461,12 @@ ends in `_view`:
 | An enum whose `structName` is `Listings`, the type sqlc would then declare (a query named `Listings` gives a method and the constant `listings`, which don't clash) | `models: enum "listings" gives sqlc the Go name "Listings", which views declares` |
 | A query whose sqlc constant (its name with the first letter lower-cased) hides a name the views file uses: `listing`, `context`, `append`, `len`, `nil`, `int64`, `string` or `error` | `models: query "Listing" gives sqlc the constant "listing", which hides a name the views file uses` |
 
+Made by every generator, like the shared cases above it (A3):
+
+| Case | Example message |
+|------|-----------------|
+| An enum whose `All<Type>Options` is another enum's Go type or one of sqlc's enum constants | `models: enum "x" gives the function "AllXOptions", which is enum "all_x_options"'s Go type` |
+
 Where zp's casing also collides (`user_1` and `user1`), the shared refusal
 of two labels with one key or variable stops the run first.
 
@@ -424,6 +491,7 @@ a refusal, or a method nothing calls; never in a wrong key.
 | `rename`, a non-default `initialisms` or `emit_exact_table_names` that change a `_view` relation's type or a field's name | `zz_<package>_views.go` doesn't compile: `undefined: <Type>` or `has no field` |
 | `omit_unused_structs: true` and no query uses the view | `undefined: <Type>` |
 | A column `overrides` entry | The field has the override's type; it scans if that type can scan the column |
+| A method `Value` on an enum type, or a package-level `All<Type>Options`, of the app's own (A3); a table whose sqlc type, made singular, is `All<Type>Options` | `Value redeclared` or `All<Type>Options redeclared`. An enum type can't also be a `driver.Valuer`, whose `Value` has another signature |
 | `emit_methods_with_db_argument: true` | `Queries` has no `db`: `zz_<package>_views.go` doesn't compile |
 | A table whose sqlc type is `Listings` (sqlc's singular of its name, which models can't compute) | `Listings redeclared` |
 
@@ -437,8 +505,8 @@ a refusal, or a method nothing calls; never in a wrong key.
 ## 9. Not in v1
 
 Parameters that mirror sqlc's `rename` and `initialisms`; several requests
-or schemas; labels for an enum type itself; option lists for forms. The
-roadmap's backlog orders them.
+or schemas; labels for an enum type itself. The roadmap's backlog orders
+them.
 
 ## 10. What a change to this document means
 
@@ -479,3 +547,15 @@ past the end reports the count; `oxen` names follow sqlc's singular rule;
 a control character in a name is refused, like one outside ASCII; and the
 refusal of a query constant covers every name the file uses, not only
 `listing`. Each refuses only apps whose generated code couldn't compile.
+
+### A3. Interfaces for UI packages (2026-11-16, for v0.3.0)
+
+Decided by epistemer on 2026-11-16; the design is
+[ADR 0006](adr/0006-interfaces-for-ui-packages.md). What zp's model layer
+got from its table and form packages is now an interface models owns:
+package `option` with `SelectOption` (§4.5); `Value()` and
+`All<Type>Options()` on every enum type (§4.2); `listing.Source`, which
+`List<Type>` now takes, and `listing.Labeler` (§4.3, §4.4); with one
+refusal (§6) and one limit (§7). `List<Type>`'s parameter type changes, and
+the enums file gains declarations: a minor version, `v0.3.0`, under v0's
+rules.

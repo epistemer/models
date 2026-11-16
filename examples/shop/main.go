@@ -20,8 +20,9 @@ import (
 func main() {
 	ctx := context.Background() // no translator: the code's English text
 	fmt.Println(models.L10nOrder.T(ctx))
-	for _, s := range models.AllOrderStatusValues() {
-		fmt.Printf("  %s: %s\n", models.L10nOrder_Status.T(ctx), s.Label().T(ctx))
+	// Every enum value is an option.SelectOption, as a select input takes.
+	for _, o := range models.AllOrderStatusOptions() {
+		fmt.Printf("  %s: %s (%s)\n", models.L10nOrder_Status.T(ctx), o.Label().T(ctx), o.Value())
 	}
 	fmt.Println(models.L10n("table.shop_customer.email").T(ctx))
 

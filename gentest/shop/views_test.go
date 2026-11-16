@@ -84,6 +84,43 @@ func (c *counting) QueryRow(ctx context.Context, sql string, args ...any) pgx.Ro
 	return c.DBTX.QueryRow(ctx, sql, args...)
 }
 
+// table stands for a table package's own state: it implements
+// listing.Source, as a table would (models' interface §4.4).
+type table struct {
+	status shop.OrderStatus
+	page   int
+}
+
+func (t table) ListingQuery() listing.Query {
+	return listing.Query{
+		Filters: []listing.Filter{filter("status", listing.Eq, t.status)},
+		Sort:    []listing.Sort{{Column: "id"}},
+		Limit:   2,
+		Offset:  2 * t.page,
+	}
+}
+
+func TestListingSource(t *testing.T) {
+	q := shop.New(queries(t))
+	rows, total, err := q.ListShopOrderListView(t.Context(), table{status: shop.OrderStatusPaid, page: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ids(rows); !slices.Equal(got, []int64{14}) || total != 3 {
+		t.Errorf("got %v and %d, want [14] and 3", got, total)
+	}
+}
+
+func TestListingNilSourcePanics(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("no panic")
+		}
+	}()
+	var q shop.Queries // never reaches the database
+	_, _, _ = q.ListShopPageView(t.Context(), nil)
+}
+
 func filter(column string, op listing.Op, value any) listing.Filter {
 	return listing.Filter{Column: column, Op: op, Value: value}
 }

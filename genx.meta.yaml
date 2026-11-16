@@ -131,6 +131,13 @@ defs: |
          else . end
        | ($e | not_reserved("enum \($e | tojson)")) as $_
        | {name: $e, type: ($e | struct_name), constants: constants($e)}] as $enums
+    | ([$enums[] | . as $e | $enums[]
+        | (select(.type == "All\($e.type)Options") | {name: $e.name, fn: .type, other: "enum \(.name | tojson)'s Go type"}),
+          (.name as $o | .constants[] | select(.const == "All\($e.type)Options")
+           | {name: $e.name, fn: .const, other: "a constant of enum \($o | tojson)"})][0]) as $opt
+    | if $opt != null
+      then error("models: enum \($opt.name | tojson) gives the function \($opt.fn | tojson), which is \($opt.other)")
+      else . end
     | ([$enums | group_by(.type)[] | select(length > 1)][0]) as $twin
     | if $twin != null
       then error("models: enum \($twin[0].name | tojson) and enum \($twin[1].name | tojson) both give sqlc the Go type \($twin[0].type | tojson)")
@@ -240,7 +247,7 @@ generators:
     out: '"\(.package.dir)/zz_\(.package.name).labels.json"'
 
   enums:
-    doc: Label() for every enum type of sqlc's default schema
+    doc: Label(), Value() and All<Type>Options() for every enum type of sqlc's default schema
     needs: [sqlc.request/v1]
     units: |
       params as $p

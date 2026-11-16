@@ -2,7 +2,10 @@
 
 package models
 
-import "github.com/epistemer/i18n"
+import (
+	"github.com/epistemer/i18n"
+	"github.com/epistemer/models/option"
+)
 
 // Label returns the label of t, or nil when t isn't a value of OrderStatus.
 func (t OrderStatus) Label() i18n.TKer {
@@ -17,4 +20,18 @@ func (t OrderStatus) Label() i18n.TKer {
 		return L10nOrderStatusCancelled
 	}
 	return nil
+}
+
+// Value returns t as a string, for option.SelectOption.
+func (t OrderStatus) Value() string { return string(t) }
+
+// AllOrderStatusOptions returns every value of OrderStatus, in the
+// schema's order, as select options.
+func AllOrderStatusOptions() []option.SelectOption {
+	return []option.SelectOption{
+		OrderStatusPending,
+		OrderStatusPaid,
+		OrderStatusShipped,
+		OrderStatusCancelled,
+	}
 }

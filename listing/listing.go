@@ -5,6 +5,7 @@
 package listing
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -46,6 +47,24 @@ const (
 type Sort struct {
 	Column string
 	Desc   bool
+}
+
+// Source gives the query of a listing. Query implements it; so can a table
+// package's own type. A generated List<Type> method takes a Source.
+type Source interface {
+	ListingQuery() Query
+}
+
+// ListingQuery returns q, so a Query is its own Source.
+func (q Query) ListingQuery() Query { return q }
+
+// Labeler gives the text for the id a link column is filtered by, such as
+// a customer's name for its id, and false when there is no such row. A
+// table calls it once per link filter of a request, to show the chosen
+// value; rows carry their own text through the view's joins. Apps
+// implement it; table packages call it. models generates none.
+type Labeler interface {
+	LabelOf(ctx context.Context, id string) (string, bool, error)
 }
 
 // ErrQuery is wrapped by every error of Build.

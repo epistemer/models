@@ -2,7 +2,10 @@
 
 package models
 
-import "github.com/epistemer/i18n"
+import (
+	"github.com/epistemer/i18n"
+	"github.com/epistemer/models/option"
+)
 
 // Label returns the label of t, or nil when t isn't a value of OrderStatus.
 func (t OrderStatus) Label() i18n.TKer {
@@ -15,6 +18,19 @@ func (t OrderStatus) Label() i18n.TKer {
 		return L10nOrderStatusShipped
 	}
 	return nil
+}
+
+// Value returns t as a string, for option.SelectOption.
+func (t OrderStatus) Value() string { return string(t) }
+
+// AllOrderStatusOptions returns every value of OrderStatus, in the
+// schema's order, as select options.
+func AllOrderStatusOptions() []option.SelectOption {
+	return []option.SelectOption{
+		OrderStatusPending,
+		OrderStatusPaid,
+		OrderStatusShipped,
+	}
 }
 
 // Label returns the label of t, or nil when t isn't a value of PaymentMethod.
@@ -42,6 +58,25 @@ func (t PaymentMethod) Label() i18n.TKer {
 	return nil
 }
 
+// Value returns t as a string, for option.SelectOption.
+func (t PaymentMethod) Value() string { return string(t) }
+
+// AllPaymentMethodOptions returns every value of PaymentMethod, in the
+// schema's order, as select options.
+func AllPaymentMethodOptions() []option.SelectOption {
+	return []option.SelectOption{
+		PaymentMethodCreditCard,
+		PaymentMethodBankTransfer,
+		PaymentMethodCashOnDelivery,
+		PaymentMethodPayPal,
+		PaymentMethodValue4,
+		PaymentMethodValue5,
+		PaymentMethodValue6,
+		PaymentMethodCaf,
+		PaymentMethodValue8,
+	}
+}
+
 // Label returns the label of t, or nil when t isn't a value of IDKind.
 func (t IDKind) Label() i18n.TKer {
 	switch t {
@@ -55,11 +90,33 @@ func (t IDKind) Label() i18n.TKer {
 	return nil
 }
 
+// Value returns t as a string, for option.SelectOption.
+func (t IDKind) Value() string { return string(t) }
+
+// AllIDKindOptions returns every value of IDKind, in the
+// schema's order, as select options.
+func AllIDKindOptions() []option.SelectOption {
+	return []option.SelectOption{
+		IDKindID,
+		IDKindUserID,
+		IDKindUuid,
+	}
+}
+
 // Label returns the label of t, or nil when t isn't a value of NoValues.
 func (t NoValues) Label() i18n.TKer {
 	switch t {
 	}
 	return nil
+}
+
+// Value returns t as a string, for option.SelectOption.
+func (t NoValues) Value() string { return string(t) }
+
+// AllNoValuesOptions returns every value of NoValues, in the
+// schema's order, as select options.
+func AllNoValuesOptions() []option.SelectOption {
+	return []option.SelectOption{}
 }
 
 // Label returns the label of t, or nil when t isn't a value of _2faMethod.
@@ -75,4 +132,18 @@ func (t _2faMethod) Label() i18n.TKer {
 		return L10n_2faMethodLevel3
 	}
 	return nil
+}
+
+// Value returns t as a string, for option.SelectOption.
+func (t _2faMethod) Value() string { return string(t) }
+
+// All_2faMethodOptions returns every value of _2faMethod, in the
+// schema's order, as select options.
+func All_2faMethodOptions() []option.SelectOption {
+	return []option.SelectOption{
+		_2faMethodTotp,
+		_2faMethodSms,
+		_2faMethodU2f,
+		_2faMethodLevel3,
+	}
 }

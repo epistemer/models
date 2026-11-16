@@ -2,17 +2,19 @@
 
 neozp's generators for database models that [sqlc](https://sqlc.dev)
 generates. sqlc writes the Go models; models adds a translatable label for
-every enum value, table, view and column, a `Label()` method on every enum
-type, and a paged, searchable listing method for every view whose name ends
-in `_view`. It is three trivial generators run by
-[genx](https://github.com/epistemer/genx), plus a small runtime package,
-`listing`; [i18n](https://github.com/epistemer/i18n) turns the labels into
-Go.
+every enum value, table, view and column, `Label()`, `Value()` and an
+option list for every enum type, and a paged, searchable listing method
+for every view whose name ends in `_view`. It is three trivial generators
+run by [genx](https://github.com/epistemer/genx), plus two small runtime
+packages, `listing` and `option`, whose interfaces neozp's table and form
+packages build on; [i18n](https://github.com/epistemer/i18n) turns the
+labels into Go.
 
 ```go
 status.Label().T(ctx)                              // "paid", or its translation
 models.L10nOrder_Status.T(ctx)                     // a column's label
 models.L10n("table.shop_order.status").T(ctx)      // the same, by SQL name
+models.AllOrderStatusOptions()                     // []option.SelectOption, for a select input
 
 // import "github.com/epistemer/models/listing"
 rows, total, err := q.ListShopOrderListView(ctx, listing.Query{  // a page of a view
@@ -88,6 +90,15 @@ stable pages, end `Sort` on a column unique in the view, such as `id`.
 To embed the listing methods in your own interface next to sqlc's
 `Querier`, set sqlc's `emit_interface: true`:
 `type Q interface { models.Querier; models.Listings }`.
+
+**Interfaces for tables and forms.** models owns what a table or form
+package needs from the models, so those packages depend on models and not
+the other way: `option.SelectOption` (`Value()`, `Label()`), which every
+enum value implements; `listing.Source` (`ListingQuery()`), which a
+listing method takes and which `listing.Query` implements itself, so a
+table can pass its own state; and `listing.Labeler` (`LabelOf`), which an
+app implements to show the text of the id a link column is filtered by
+(rows carry their own text through the view's joins).
 
 `table_prefix` is removed from table and column names in variables,
 English text and column keys, so set it before translations exist. If

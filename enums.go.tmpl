@@ -2,7 +2,10 @@
 
 package {{.package}}
 
-import "github.com/epistemer/i18n"
+import (
+	"github.com/epistemer/i18n"
+	"github.com/epistemer/models/option"
+)
 {{range .enums}}
 // Label returns the label of t, or nil when t isn't a value of {{.type}}.
 func (t {{.type}}) Label() i18n.TKer {
@@ -13,5 +16,18 @@ func (t {{.type}}) Label() i18n.TKer {
 	{{- end}}
 	}
 	return nil
+}
+
+// Value returns t as a string, for option.SelectOption.
+func (t {{.type}}) Value() string { return string(t) }
+
+// All{{.type}}Options returns every value of {{.type}}, in the
+// schema's order, as select options.
+func All{{.type}}Options() []option.SelectOption {
+	return []option.SelectOption{
+	{{- range .constants}}
+		{{.const}},
+	{{- end}}
+	}
 }
 {{end}}
