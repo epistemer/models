@@ -17,9 +17,15 @@ package needs from the models is an interface models owns.
   Apps implement it; nothing generates it yet.
 - A refusal: an enum whose `All<Type>Options` is another enum's Go type.
 
-**Breaking**, for an app that declared its own `Value()` or
-`All<Type>Options` on an enum type, or that stored a `List<Type>` method
-in a variable of the old function type.
+**Breaking:**
+
+- `List<Type>`'s parameter type changes, so an interface, mock or fake
+  written against `List<Type>(ctx, listing.Query)`, or a variable of that
+  function type, must change to `listing.Source`. Calls that pass a
+  `listing.Query` don't.
+- An app's own method `Value` on an enum type, or its own package-level
+  `All<Type>Options`, now clashes with the generated one. An enum type can't
+  be a `driver.Valuer` either.
 
 ## v0.2.0 (2026-11-16)
 

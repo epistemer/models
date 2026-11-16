@@ -111,6 +111,16 @@ func TestListingSource(t *testing.T) {
 	}
 }
 
+func TestListingNilSourcePanics(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("no panic")
+		}
+	}()
+	var q shop.Queries // never reaches the database
+	_, _, _ = q.ListShopPageView(t.Context(), nil)
+}
+
 func filter(column string, op listing.Op, value any) listing.Filter {
 	return listing.Filter{Column: column, Op: op, Value: value}
 }

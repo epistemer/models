@@ -3,6 +3,27 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-16: interfaces for UI packages (M6, v0.3.0)
+
+- **You said** (2026-11-16): moving zp onto neozp is out of neozp's scope,
+  and what zp's model layer got from its table and form packages becomes
+  interfaces models owns. The roadmap no longer plans or waits for zp's
+  move; `v1.0.0` is simply your call. Both rules are in your global
+  CLAUDE.md, and the skill's "Moving zp over" section is gone.
+- **You decided:** `option.SelectOption` (`Value()`, `Label()`) in a new
+  package; `All<Type>Options()` as a function; `List<Type>` takes a
+  `listing.Source`, which `listing.Query` implements; `listing.Labeler`
+  declared now. Recorded as ADR 0006 and amendment A3.
+- **Landed:** package `option`; the enums file gains `Value()` and
+  `All<Type>Options()`; `listing.Source` and `listing.Labeler`; a refusal
+  for an option list named like an enum's type or constant; the example
+  lists options; README, CHANGELOG and the skill.
+- **Review 0012** by Gemini 4 Argon (Medium), about 46k tokens: seven
+  findings, four accepted (two in part), two rejected, one brought to you.
+- **Waiting on you:** `Labeler`'s shape. It labels one id per call, so a
+  table page with link columns makes one query per row. The tag waits for
+  your answer.
+
 ## 2026-11-15: v0.2.0, listings of views (M5.2–M5.6)
 
 - **You approved** amendment A2; it is in interface.md (§4.3, §4.4, §6,

@@ -258,7 +258,9 @@ func (q *Queries) ListOrderSummaryView(ctx context.Context, src listing.Source) 
 ```
 
 - `src` is a `listing.Source` (A3): a `listing.Query` value, or a table
-  package's own type. It is read once, and must not be nil.
+  package's own type. It is read once, and must not be nil (a nil `src`
+  panics). A filter on an enum column takes the enum value, or an
+  `option.SelectOption`'s `Value()`, not the option itself.
 - An error from `listing.Build` returns before any query runs.
 - The rows tell the total, and the count isn't run, when they end the
   listing: `Limit` is 0 or more than the rows returned, and either
@@ -461,7 +463,7 @@ Made by every generator, like the shared cases above it (A3):
 
 | Case | Example message |
 |------|-----------------|
-| An enum whose `All<Type>Options` is another enum's Go type | `models: enum "x" gives the function "AllXOptions", which is enum "all_x_options"'s Go type` |
+| An enum whose `All<Type>Options` is another enum's Go type or one of sqlc's enum constants | `models: enum "x" gives the function "AllXOptions", which is enum "all_x_options"'s Go type` |
 
 Where zp's casing also collides (`user_1` and `user1`), the shared refusal
 of two labels with one key or variable stops the run first.
@@ -487,7 +489,7 @@ a refusal, or a method nothing calls; never in a wrong key.
 | `rename`, a non-default `initialisms` or `emit_exact_table_names` that change a `_view` relation's type or a field's name | `zz_<package>_views.go` doesn't compile: `undefined: <Type>` or `has no field` |
 | `omit_unused_structs: true` and no query uses the view | `undefined: <Type>` |
 | A column `overrides` entry | The field has the override's type; it scans if that type can scan the column |
-| A method `Value` or a declaration `All<Type>Options` of the app's own for an enum type (A3) | `Value redeclared` or `All<Type>Options redeclared` |
+| A method `Value` on an enum type, or a package-level `All<Type>Options`, of the app's own (A3); a table whose sqlc type, made singular, is `All<Type>Options` | `Value redeclared` or `All<Type>Options redeclared`. An enum type can't also be a `driver.Valuer`, whose `Value` has another signature |
 | `emit_methods_with_db_argument: true` | `Queries` has no `db`: `zz_<package>_views.go` doesn't compile |
 | A table whose sqlc type is `Listings` (sqlc's singular of its name, which models can't compute) | `Listings redeclared` |
 

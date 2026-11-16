@@ -131,10 +131,12 @@ defs: |
          else . end
        | ($e | not_reserved("enum \($e | tojson)")) as $_
        | {name: $e, type: ($e | struct_name), constants: constants($e)}] as $enums
-    | ([$enums[] | . as $e | $enums[] | select(.type == "All\($e.type)Options")
-        | {name: $e.name, fn: .type, other: .name}][0]) as $opt
+    | ([$enums[] | . as $e | $enums[]
+        | (select(.type == "All\($e.type)Options") | {name: $e.name, fn: .type, other: "enum \(.name | tojson)'s Go type"}),
+          (.name as $o | .constants[] | select(.const == "All\($e.type)Options")
+           | {name: $e.name, fn: .const, other: "a constant of enum \($o | tojson)"})][0]) as $opt
     | if $opt != null
-      then error("models: enum \($opt.name | tojson) gives the function \($opt.fn | tojson), which is enum \($opt.other | tojson)'s Go type")
+      then error("models: enum \($opt.name | tojson) gives the function \($opt.fn | tojson), which is \($opt.other)")
       else . end
     | ([$enums | group_by(.type)[] | select(length > 1)][0]) as $twin
     | if $twin != null

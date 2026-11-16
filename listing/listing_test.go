@@ -1,6 +1,7 @@
 package listing_test
 
 import (
+	"context"
 	"errors"
 	"reflect"
 	"strings"
@@ -143,5 +144,23 @@ func TestQueryIsItsOwnSource(t *testing.T) {
 	var src listing.Source = q
 	if got := src.ListingQuery(); !reflect.DeepEqual(got, q) {
 		t.Errorf("got %+v, want %+v", got, q)
+	}
+}
+
+// names is an app's Labeler, as a link column would call it.
+type names map[string]string
+
+func (n names) LabelOf(_ context.Context, id string) (string, bool, error) {
+	s, ok := n[id]
+	return s, ok, nil
+}
+
+func TestLabeler(t *testing.T) {
+	var l listing.Labeler = names{"7": "Ann"}
+	if s, ok, err := l.LabelOf(t.Context(), "7"); s != "Ann" || !ok || err != nil {
+		t.Errorf("got %q, %v, %v", s, ok, err)
+	}
+	if _, ok, _ := l.LabelOf(t.Context(), "8"); ok {
+		t.Error("found a row that isn't there")
 	}
 }

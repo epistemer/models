@@ -28,6 +28,9 @@ func TestOptions(t *testing.T) {
 	if shop.AllPaymentMethodOptions()[0].Value() != "credit-card" {
 		t.Error("a caller changed the next call's options")
 	}
+	if v := shop.OrderStatus("bogus"); v.Value() != "bogus" || v.Label() != nil {
+		t.Errorf("a value outside the enum: %q, %v", v.Value(), v.Label())
+	}
 	if got := shop.AllNoValuesOptions(); got == nil || len(got) != 0 {
 		t.Errorf("an enum with no values: %#v, want an empty slice", got)
 	}

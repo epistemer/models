@@ -304,6 +304,9 @@ func TestRefusals(t *testing.T) {
 		{"an option list named like an enum", nil, func(t *testing.T) []genxtest.Input {
 			return []genxtest.Input{request(t, "public", public("", enum("x", "a")+", "+enum("all_x_options", "b")), "")}
 		}, `models: enum "x" gives the function "AllXOptions", which is enum "all_x_options"'s Go type`},
+		{"an option list named like an enum constant", nil, func(t *testing.T) []genxtest.Input {
+			return []genxtest.Input{request(t, "public", public("", enum("x", "a")+", "+enum("all_x", "options")), "")}
+		}, `models: enum "x" gives the function "AllXOptions", which is a constant of enum "all_x"`},
 		{"table reserved", nil, func(t *testing.T) []genxtest.Input {
 			return []genxtest.Input{request(t, "public", public(table("l10n_note", "id"), ""), "")}
 		}, `models: table "l10n_note" gives sqlc the Go name "L10nNote"; names starting with "L10n" are reserved for labels`},

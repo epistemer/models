@@ -123,9 +123,9 @@ other way ([ADR 0006](adr/0006-interfaces-for-ui-packages.md)).
 | ✓ | ID | Item | Size | Done when |
 |---|----|------|------|-----------|
 | ☑ | M6.1 | ADR 0006 and interface amendment A3, as epistemer decided them | S | Merged |
-| ☐ | M6.2 | Package `option`; `Value()` and `All<Type>Options()` in the enums file, with A3's refusal | S | Goldens; every enum value is an `option.SelectOption` (a compile-time check in `gentest`); the refusal tested |
-| ☐ | M6.3 | `listing.Source` and `listing.Labeler`; `List<Type>` takes a `Source` | S | Unit tests; the PostgreSQL test passes a `Query` and a `Source` of its own |
-| ☐ | M6.4 | The example, docs, the skill, a cross-model review, CHANGELOG and tag `v0.3.0` | S | Tag pushed |
+| ☑ | M6.2 | Package `option`; `Value()` and `All<Type>Options()` in the enums file, with A3's refusal | S | Goldens; every enum value is an `option.SelectOption` (a compile-time check in `gentest`); the refusal tested |
+| ☑ | M6.3 | `listing.Source` and `listing.Labeler`; `List<Type>` takes a `Source` | S | Unit tests; the PostgreSQL test passes a `Query` and a `Source` of its own |
+| ☑ | M6.4 | The example, docs, the skill, a cross-model review, CHANGELOG and tag `v0.3.0` | S | Tag pushed |
 
 ## After v0.3.0 (backlog)
 
