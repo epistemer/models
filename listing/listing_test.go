@@ -137,3 +137,11 @@ func TestBuildRefuses(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryIsItsOwnSource(t *testing.T) {
+	q := listing.Query{Search: "x", SearchIn: []string{"note"}, Limit: 3}
+	var src listing.Source = q
+	if got := src.ListingQuery(); !reflect.DeepEqual(got, q) {
+		t.Errorf("got %+v, want %+v", got, q)
+	}
+}

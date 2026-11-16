@@ -301,6 +301,9 @@ func TestRefusals(t *testing.T) {
 		{"two enums, one Go type", nil, func(t *testing.T) []genxtest.Input {
 			return []genxtest.Input{request(t, "public", public("", enum("user1", "a")+", "+enum("user_1", "b")), "")}
 		}, `models: enum "user1" and enum "user_1" both give sqlc the Go type "User1"`},
+		{"an option list named like an enum", nil, func(t *testing.T) []genxtest.Input {
+			return []genxtest.Input{request(t, "public", public("", enum("x", "a")+", "+enum("all_x_options", "b")), "")}
+		}, `models: enum "x" gives the function "AllXOptions", which is enum "all_x_options"'s Go type`},
 		{"table reserved", nil, func(t *testing.T) []genxtest.Input {
 			return []genxtest.Input{request(t, "public", public(table("l10n_note", "id"), ""), "")}
 		}, `models: table "l10n_note" gives sqlc the Go name "L10nNote"; names starting with "L10n" are reserved for labels`},
@@ -335,10 +338,10 @@ func TestViewsNames(t *testing.T) {
 		table("view_log", "id")+", "+table("preview", "id"), ""), `{"name": "Listings"}`)
 	got := string(only(t, render(t, "views", nil, in), "models/zz_models_views.go"))
 	for _, want := range []string{
-		"func (q *Queries) List_1View(ctx context.Context, lq listing.Query) ([]_1View, int64, error) {",
+		"func (q *Queries) List_1View(ctx context.Context, src listing.Source) ([]_1View, int64, error) {",
 		`listing.Build(lq, "1_view", []string{`,
 		"&i.Order,", "&i.UserID,",
-		"func (q *Queries) ListOxView(ctx context.Context, lq listing.Query) ([]OxView, int64, error) {",
+		"func (q *Queries) ListOxView(ctx context.Context, src listing.Source) ([]OxView, int64, error) {",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("views file lacks %s:\n%s", want, got)

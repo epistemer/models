@@ -27,8 +27,10 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
   session. Branch names, PR titles and commit subjects start with the ID.
 - **Interface first.** M1 ends by freezing `docs/interface.md`. After that a
   change to what an app writes or gets back is an amendment.
-- **Versions.** The first usable release is `v0.1.0`. `v1.0.0` waits until
-  zp's business code runs on it.
+- **Versions.** The first usable release is `v0.1.0`. `v1.0.0` is
+  epistemer's call. Moving zp onto neozp is out of neozp's scope (told
+  2026-11-16): no item here plans or waits for it, and zp stays only a
+  record of what the framework must do.
 - **Sizes.** S is up to 1 day, M is 2–3 days, for one developer without AI
   help. They order the work; they don't promise dates.
 
@@ -41,7 +43,8 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 | [M2](#m2--the-generators) | `labels` and `enums`, with tests | M1 |
 | [M3](#m3--an-example-and-zp) | An example app; a comparison with zp | M2 |
 | [M4](#m4--v010) | Docs, the skill, `v0.1.0` | M3 |
-| [M5](#m5--listings-of-views-v020) | zp's view builder as a generator and a runtime package, `v0.2.0` | M4 |
+| [M5](#m5--listings-of-views-v020) | Listings of views: a generator and a runtime package, `v0.2.0` | M4 |
+| [M6](#m6--interfaces-for-ui-packages-v030) | `option.SelectOption`, `listing.Source` and `listing.Labeler`, `v0.3.0` | M5 |
 
 ## Definition of done (every work item)
 
@@ -99,8 +102,8 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 
 ## M5 — Listings of views (v0.2.0)
 
-zp's business code can't move before its view builder (`gen/view`) has a
-replacement. The design is [ADR 0005](adr/0005-view-listings.md).
+What zp's view builder (`gen/view`) did, as models' own feature. The design
+is [ADR 0005](adr/0005-view-listings.md).
 
 | ✓ | ID | Item | Size | Done when |
 |---|----|------|------|-----------|
@@ -111,13 +114,25 @@ replacement. The design is [ADR 0005](adr/0005-view-listings.md).
 | ☑ | M5.5 | `examples/shop` lists a view; zp on a copy gets its 13 methods, and its models package compiles | S | CI green; the zp numbers in ADR 0004 or a new one |
 | ☑ | M5.6 | Docs, the skill, a cross-model review, CHANGELOG and tag `v0.2.0` | S | Tag pushed |
 
-## After v0.2.0 (backlog)
+## M6 — Interfaces for UI packages (v0.3.0)
+
+What zp's model layer got from its table and form packages becomes
+interfaces models owns, so neozp's UI packages depend on models and not the
+other way ([ADR 0006](adr/0006-interfaces-for-ui-packages.md)).
+
+| ✓ | ID | Item | Size | Done when |
+|---|----|------|------|-----------|
+| ☑ | M6.1 | ADR 0006 and interface amendment A3, as epistemer decided them | S | Merged |
+| ☐ | M6.2 | Package `option`; `Value()` and `All<Type>Options()` in the enums file, with A3's refusal | S | Goldens; every enum value is an `option.SelectOption` (a compile-time check in `gentest`); the refusal tested |
+| ☐ | M6.3 | `listing.Source` and `listing.Labeler`; `List<Type>` takes a `Source` | S | Unit tests; the PostgreSQL test passes a `Query` and a `Source` of its own |
+| ☐ | M6.4 | The example, docs, the skill, a cross-model review, CHANGELOG and tag `v0.3.0` | S | Tag pushed |
+
+## After v0.3.0 (backlog)
 
 1. Parameters that mirror sqlc's `rename` and `initialisms`, for apps that
    set them (D9).
 2. More than one request, for apps with several databases (D8).
 3. Schemas other than the default one (D8).
-4. Option types, with the package that renders forms (D10).
 
 ## Risks
 

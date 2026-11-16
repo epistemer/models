@@ -11,15 +11,16 @@ import (
 // Listings is the listing methods of Queries, one per view.
 type Listings interface {
 {{- range .views}}
-	{{.method}}(ctx context.Context, lq listing.Query) ([]{{.type}}, int64, error)
+	{{.method}}(ctx context.Context, src listing.Source) ([]{{.type}}, int64, error)
 {{- end}}
 }
 
 var _ Listings = (*Queries)(nil)
 {{range .views}}
 // {{.method}} returns the rows of {{.name}}
-// that lq selects, and how many rows its search and filters match.
-func (q *Queries) {{.method}}(ctx context.Context, lq listing.Query) ([]{{.type}}, int64, error) {
+// that src selects, and how many rows its search and filters match.
+func (q *Queries) {{.method}}(ctx context.Context, src listing.Source) ([]{{.type}}, int64, error) {
+	lq := src.ListingQuery()
 	rowsSQL, countSQL, args, err := listing.Build(lq, {{printf "%q" .name}}, []string{
 	{{- range .columns}}
 		{{printf "%q" .name}},

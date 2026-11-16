@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.3.0 (2026-11-16)
+
+Interfaces for UI packages, amendment A3 (ADR 0006): what a table or form
+package needs from the models is an interface models owns.
+
+- **Package `option`**: `SelectOption` (`Value() string`,
+  `Label() i18n.TKer`). The models module now requires i18n `v0.2.0` or
+  later.
+- **`enums`** also writes `Value()` and `All<Type>Options() []option.SelectOption`
+  for every enum type, so every enum value is a `SelectOption`.
+- **`listing.Source`**: `List<Type>` takes a `Source` instead of a `Query`.
+  `Query` implements `Source`, so calls that pass a `Query` don't change; a
+  table package can pass its own type.
+- **`listing.Labeler`**: the text that stands for a row, for link columns.
+  Apps implement it; nothing generates it yet.
+- A refusal: an enum whose `All<Type>Options` is another enum's Go type.
+
+**Breaking**, for an app that declared its own `Value()` or
+`All<Type>Options` on an enum type, or that stored a `List<Type>` method
+in a variable of the old function type.
+
 ## v0.2.0 (2026-11-16)
 
 Listings of views, interface amendment A2 (ADR 0005). Nothing changes for an

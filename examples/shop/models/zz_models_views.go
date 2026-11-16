@@ -10,14 +10,15 @@ import (
 
 // Listings is the listing methods of Queries, one per view.
 type Listings interface {
-	ListShopOrderListView(ctx context.Context, lq listing.Query) ([]ShopOrderListView, int64, error)
+	ListShopOrderListView(ctx context.Context, src listing.Source) ([]ShopOrderListView, int64, error)
 }
 
 var _ Listings = (*Queries)(nil)
 
 // ListShopOrderListView returns the rows of shop_order_list_view
-// that lq selects, and how many rows its search and filters match.
-func (q *Queries) ListShopOrderListView(ctx context.Context, lq listing.Query) ([]ShopOrderListView, int64, error) {
+// that src selects, and how many rows its search and filters match.
+func (q *Queries) ListShopOrderListView(ctx context.Context, src listing.Source) ([]ShopOrderListView, int64, error) {
+	lq := src.ListingQuery()
 	rowsSQL, countSQL, args, err := listing.Build(lq, "shop_order_list_view", []string{
 		"id",
 		"status",
