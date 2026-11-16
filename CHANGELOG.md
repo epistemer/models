@@ -13,7 +13,7 @@ package needs from the models is an interface models owns.
 - **`listing.Source`**: `List<Type>` takes a `Source` instead of a `Query`.
   `Query` implements `Source`, so calls that pass a `Query` don't change; a
   table package can pass its own type.
-- **`listing.Labeler`**: the text that stands for a row, for link columns.
+- **`listing.Labeler`**: the text of the id a link column is filtered by.
   Apps implement it; nothing generates it yet.
 - A refusal: an enum whose `All<Type>Options` is another enum's Go type.
 

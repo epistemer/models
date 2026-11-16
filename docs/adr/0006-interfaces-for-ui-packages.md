@@ -23,8 +23,10 @@ From zp's code, its model layer depended on UI packages in three places:
 - `Builder`: the interface, declared in zp's models package, through which
   zp's table (`view.View`) shaped a view's query. models v0.2.0 took a
   `listing.Query` value instead (ADR 0005, D1).
-- A link column's `Labeler func(id string) (string, bool)`: zp's table
-  turned a row's id into the text shown for it.
+- A link column's `Labeler func(id string) (string, bool)`: when a table
+  was filtered by a link column, zp's table turned the chosen id from the
+  URL into the text its filter form showed. Rows never needed it: every zp
+  view joins the linked table and selects the text itself.
 
 Checked on sqlc v1.29.0: sqlc declares `Value() (driver.Value, error)` on
 `Null<Type>` only, with either driver; the enum type itself has `Scan`,
@@ -53,8 +55,10 @@ A nil `src` panics, as a nil `io.Reader` does.
 
 **D4. `listing.Labeler`** (epistemer chose to declare it now):
 `type Labeler interface { LabelOf(ctx context.Context, id string) (string, bool, error) }`,
-the text that stands for a row, such as a customer's name for its id in a
-link column; `false` when there is no such row. Apps implement it; a table
+the text for the id a link column is filtered by, such as a customer's
+name for its id; `false` when there is no such row. One call per link filter
+of a request, never per row (a review's worry, rejected: views join the
+text in). Apps implement it; a table
 package calls it. models generates no implementation yet.
 
 **D5. Dependencies** (Claude). `option` imports i18n for `TKer`, so the

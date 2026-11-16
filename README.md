@@ -97,7 +97,8 @@ the other way: `option.SelectOption` (`Value()`, `Label()`), which every
 enum value implements; `listing.Source` (`ListingQuery()`), which a
 listing method takes and which `listing.Query` implements itself, so a
 table can pass its own state; and `listing.Labeler` (`LabelOf`), which an
-app implements to show a row's text for its id, as in a link column.
+app implements to show the text of the id a link column is filtered by
+(rows carry their own text through the view's joins).
 
 `table_prefix` is removed from table and column names in variables,
 English text and column keys, so set it before translations exist. If

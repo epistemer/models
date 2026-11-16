@@ -326,8 +326,10 @@ type Source interface {
 // ListingQuery returns q, so a Query is its own Source.
 func (q Query) ListingQuery() Query
 
-// Labeler gives the text that stands for a row, such as a customer's name
-// for its id in a link column, and false when there is no such row (A3).
+// Labeler gives the text for the id a link column is filtered by, such as
+// a customer's name for its id, and false when there is no such row. A
+// table calls it once per link filter of a request, to show the chosen
+// value; rows carry their own text through the view's joins (A3).
 // Apps implement it; table packages call it. models generates none.
 type Labeler interface {
 	LabelOf(ctx context.Context, id string) (string, bool, error)

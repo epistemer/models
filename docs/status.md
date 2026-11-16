@@ -19,10 +19,12 @@ taken for you, what's next, and what's waiting on you.
   for an option list named like an enum's type or constant; the example
   lists options; README, CHANGELOG and the skill.
 - **Review 0012** by Gemini 4 Argon (Medium), about 46k tokens: seven
-  findings, four accepted (two in part), two rejected, one brought to you.
-- **Waiting on you:** `Labeler`'s shape. It labels one id per call, so a
-  table page with link columns makes one query per row. The tag waits for
-  your answer.
+  findings, four accepted (two in part), three rejected. Its worry that
+  `Labeler` makes a query per row was wrong, as you pointed out: a table
+  calls it once per link filter, and rows get their text from the views'
+  joins. The docs now say so.
+- **Tagged:** `v0.3.0`.
+- **Waiting on you:** nothing.
 
 ## 2026-11-15: v0.2.0, listings of views (M5.2–M5.6)
 
