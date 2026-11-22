@@ -6,6 +6,7 @@ taken for you, what's next, and what's waiting on you.
 ## 2026-11-22 — A4: column sets for views (v0.4.0)
 
 **Accepted** by epistemer with the defaults of M1–M5 (ADR 0007).
+**Released** as v0.4.0 (#14), checked through proxy.golang.org.
 
 **Landed** (Claude):
 - package `column` (`Kind`, `Value`, `Column[R]`, `UUID`);
