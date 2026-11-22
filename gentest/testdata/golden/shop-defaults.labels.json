@@ -318,6 +318,102 @@
       "path": "table.shop_page_view.seen_at",
       "text": "Seen At",
       "var": "L10nShopPageView_SeenAt"
+    },
+    {
+      "key": "table.shop_kinds_view",
+      "path": "table.shop_kinds_view",
+      "text": "Shop Kinds View",
+      "var": "L10nShopKindsView"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Id",
+      "path": "table.shop_kinds_view.id",
+      "text": "Id",
+      "var": "L10nShopKindsView_Id"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Name",
+      "path": "table.shop_kinds_view.name",
+      "text": "Name",
+      "var": "L10nShopKindsView_Name"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Note",
+      "path": "table.shop_kinds_view.note",
+      "text": "Note",
+      "var": "L10nShopKindsView_Note"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Ref",
+      "path": "table.shop_kinds_view.ref",
+      "text": "Ref",
+      "var": "L10nShopKindsView_Ref"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Small",
+      "path": "table.shop_kinds_view.small",
+      "text": "Small",
+      "var": "L10nShopKindsView_Small"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Medium",
+      "path": "table.shop_kinds_view.medium",
+      "text": "Medium",
+      "var": "L10nShopKindsView_Medium"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Ratio",
+      "path": "table.shop_kinds_view.ratio",
+      "text": "Ratio",
+      "var": "L10nShopKindsView_Ratio"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Score",
+      "path": "table.shop_kinds_view.score",
+      "text": "Score",
+      "var": "L10nShopKindsView_Score"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Price",
+      "path": "table.shop_kinds_view.price",
+      "text": "Price",
+      "var": "L10nShopKindsView_Price"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Active",
+      "path": "table.shop_kinds_view.active",
+      "text": "Active",
+      "var": "L10nShopKindsView_Active"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Day",
+      "path": "table.shop_kinds_view.day",
+      "text": "Day",
+      "var": "L10nShopKindsView_Day"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_At",
+      "path": "table.shop_kinds_view.at",
+      "text": "At",
+      "var": "L10nShopKindsView_At"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_State",
+      "path": "table.shop_kinds_view.state",
+      "text": "State",
+      "var": "L10nShopKindsView_State"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Tags",
+      "path": "table.shop_kinds_view.tags",
+      "text": "Tags",
+      "var": "L10nShopKindsView_Tags"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Meta",
+      "path": "table.shop_kinds_view.meta",
+      "text": "Meta",
+      "var": "L10nShopKindsView_Meta"
     }
   ],
   "package": {
