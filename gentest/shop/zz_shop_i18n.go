@@ -58,6 +58,22 @@ var (
 	L10nPageView_Id                 = i18n.Key("table.shop_page_view.PageView_Id", "Id")
 	L10nPageView_Path               = i18n.Key("table.shop_page_view.PageView_Path", "Path")
 	L10nPageView_SeenAt             = i18n.Key("table.shop_page_view.PageView_SeenAt", "Seen At")
+	L10nKindsView                   = i18n.Key("table.shop_kinds_view", "Kinds View")
+	L10nKindsView_Id                = i18n.Key("table.shop_kinds_view.KindsView_Id", "Id")
+	L10nKindsView_Name              = i18n.Key("table.shop_kinds_view.KindsView_Name", "Name")
+	L10nKindsView_Note              = i18n.Key("table.shop_kinds_view.KindsView_Note", "Note")
+	L10nKindsView_Ref               = i18n.Key("table.shop_kinds_view.KindsView_Ref", "Ref")
+	L10nKindsView_Small             = i18n.Key("table.shop_kinds_view.KindsView_Small", "Small")
+	L10nKindsView_Medium            = i18n.Key("table.shop_kinds_view.KindsView_Medium", "Medium")
+	L10nKindsView_Ratio             = i18n.Key("table.shop_kinds_view.KindsView_Ratio", "Ratio")
+	L10nKindsView_Score             = i18n.Key("table.shop_kinds_view.KindsView_Score", "Score")
+	L10nKindsView_Price             = i18n.Key("table.shop_kinds_view.KindsView_Price", "Price")
+	L10nKindsView_Active            = i18n.Key("table.shop_kinds_view.KindsView_Active", "Active")
+	L10nKindsView_Day               = i18n.Key("table.shop_kinds_view.KindsView_Day", "Day")
+	L10nKindsView_At                = i18n.Key("table.shop_kinds_view.KindsView_At", "At")
+	L10nKindsView_State             = i18n.Key("table.shop_kinds_view.KindsView_State", "State")
+	L10nKindsView_Tags              = i18n.Key("table.shop_kinds_view.KindsView_Tags", "Tags")
+	L10nKindsView_Meta              = i18n.Key("table.shop_kinds_view.KindsView_Meta", "Meta")
 )
 
 // l10n holds every label that has a path.
@@ -115,6 +131,22 @@ var l10n = map[string]i18n.TKer{
 	"table.shop_page_view.id":              L10nPageView_Id,
 	"table.shop_page_view.path":            L10nPageView_Path,
 	"table.shop_page_view.seen_at":         L10nPageView_SeenAt,
+	"table.shop_kinds_view":                L10nKindsView,
+	"table.shop_kinds_view.id":             L10nKindsView_Id,
+	"table.shop_kinds_view.name":           L10nKindsView_Name,
+	"table.shop_kinds_view.note":           L10nKindsView_Note,
+	"table.shop_kinds_view.ref":            L10nKindsView_Ref,
+	"table.shop_kinds_view.small":          L10nKindsView_Small,
+	"table.shop_kinds_view.medium":         L10nKindsView_Medium,
+	"table.shop_kinds_view.ratio":          L10nKindsView_Ratio,
+	"table.shop_kinds_view.score":          L10nKindsView_Score,
+	"table.shop_kinds_view.price":          L10nKindsView_Price,
+	"table.shop_kinds_view.active":         L10nKindsView_Active,
+	"table.shop_kinds_view.day":            L10nKindsView_Day,
+	"table.shop_kinds_view.at":             L10nKindsView_At,
+	"table.shop_kinds_view.state":          L10nKindsView_State,
+	"table.shop_kinds_view.tags":           L10nKindsView_Tags,
+	"table.shop_kinds_view.meta":           L10nKindsView_Meta,
 }
 
 // L10n returns the label at path, or nil when there is none.

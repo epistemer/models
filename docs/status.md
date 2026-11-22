@@ -3,6 +3,31 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-22 — A4: column sets for views (v0.4.0)
+
+**Accepted** by epistemer with the defaults of M1–M5 (ADR 0007).
+
+**Landed** (Claude):
+- package `column` (`Kind`, `Value`, `Column[R]`, `UUID`);
+- `views` writes `<Type>Columns` beside each `List<Type>`. The jq maps
+  each SQL type, nullable or not, to its kind and getter as sqlc's pgx/v5
+  types it; a type no kind takes is left out and named.
+- The fixture gains `shop_kinds_view`, a column of every kind, nullable
+  and not, and an array and jsonb that are left out. A test reads every
+  getter, set and null, with its label and options.
+- interface §4.3 and the new §4.6, §2's needs, §6's two refusals, §7's
+  two limits, the ADR's correction (a need, not a refusal), CHANGELOG.
+
+**Review** ([0013](reviews/0013-column-sets.md)): Gemini 4 Argon
+(Medium), about 27k tokens. Ten findings; six changed the code or docs:
+- numerics read from their exact digits, NaN and ±Inf included;
+- infinite dates and times marked, not read as year 1;
+- the clashes of `column` and `<Type>Columns` refused;
+- a type qualified with the default schema found.
+
+Rejected, after checking sqlc v1.29.0's mapping: `citext` and `name` as
+`interface{}`.
+
 ## 2026-11-16: interfaces for UI packages (M6, v0.3.0)
 
 - **You said** (2026-11-16): moving zp onto neozp is out of neozp's scope,

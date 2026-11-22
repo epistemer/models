@@ -82,3 +82,24 @@ CREATE TABLE shop_page_view (
   path text NOT NULL,
   seen_at timestamptz NOT NULL
 );
+
+-- Column sets (interface §4.6, A4): a column of every kind, nullable and
+-- not, and two of types no kind takes (an array, jsonb), which the set
+-- leaves out.
+CREATE TABLE shop_kinds_view (
+  id bigint PRIMARY KEY,
+  name text NOT NULL,
+  note varchar(40),
+  ref uuid,
+  small smallint NOT NULL,
+  medium integer,
+  ratio real,
+  score double precision NOT NULL,
+  price numeric(10, 2),
+  active boolean,
+  day date NOT NULL,
+  at timestamp,
+  state order_status,
+  tags text[],
+  meta jsonb
+);
