@@ -287,6 +287,24 @@ type ShopCustomer struct {
 	SecondFactor Null_2faMethod
 }
 
+type ShopKindsView struct {
+	ID     int64
+	Name   string
+	Note   pgtype.Text
+	Ref    pgtype.UUID
+	Small  int16
+	Medium pgtype.Int4
+	Ratio  pgtype.Float4
+	Score  float64
+	Price  pgtype.Numeric
+	Active pgtype.Bool
+	Day    pgtype.Date
+	At     pgtype.Timestamp
+	State  NullOrderStatus
+	Tags   []string
+	Meta   []byte
+}
+
 type ShopOrder struct {
 	ID         int64
 	CustomerID int64

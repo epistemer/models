@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.4.0 (2026-11-22)
+
+Column sets for views, amendment A4 (ADR 0007), for ui's tables.
+
+- **Package `column`**: `Kind`, `Value`, `Column[R]`, and `UUID`,
+  `Numeric` and `Infinite` for generated getters. A column
+  holds what the schema knows: its SQL name, its label, a kind from its SQL
+  type, an enum's options, and a getter returning a plain value with nulls
+  unwrapped, so a table package never imports the driver.
+- **`views`** also writes a `<Type>Columns` set beside each `List<Type>`.
+  A column of a type no kind takes (an array, json, bytea, …) is left out
+  and named in the set's comment. A numeric keeps its exact digits; an
+  infinite date or time is marked.
+- Two refusals: a query whose constant hides `column`, and a column set
+  whose name is already a query's, a relation's or an enum's.
+
+**Breaking:**
+
+- `views` now needs `labels` and i18n's `labels`, and `enums` when a view
+  has an enum column; on its own it worked before. Without them the views
+  file doesn't compile.
+- A package-level `<Type>Columns` of the app's own, for a view's type,
+  clashes with the generated one.
+
 ## v0.3.0 (2026-11-16)
 
 Interfaces for UI packages, amendment A3 (ADR 0006): what a table or form

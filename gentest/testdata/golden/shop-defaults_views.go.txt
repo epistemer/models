@@ -5,8 +5,11 @@ package models
 import (
 	"context"
 
+	"github.com/epistemer/models/column"
 	"github.com/epistemer/models/listing"
 )
+
+var _ column.Kind // the import stays when no view has a column of a kind
 
 // Listings is the listing methods of Queries, one per view.
 type Listings interface {
@@ -114,4 +117,97 @@ func (q *Queries) ListShopPageView(ctx context.Context, src listing.Source) ([]S
 		total = int64(lq.Offset + n)
 	}
 	return items, total, nil
+}
+
+// ShopOrderListViewColumns are shop_order_list_view's columns, for a table package (A4).
+var ShopOrderListViewColumns = struct {
+	ID      column.Column[ShopOrderListView]
+	Status  column.Column[ShopOrderListView]
+	Payment column.Column[ShopOrderListView]
+	Email   column.Column[ShopOrderListView]
+	Order   column.Column[ShopOrderListView]
+}{
+	ID: column.Column[ShopOrderListView]{
+		Name:  "id",
+		Label: L10nShopOrderListView_Id,
+		Kind:  column.Integer,
+		Get: func(r ShopOrderListView) column.Value {
+			return column.Value{Int: r.ID}
+		},
+	},
+	Status: column.Column[ShopOrderListView]{
+		Name:    "status",
+		Label:   L10nShopOrderListView_Status,
+		Kind:    column.Enum,
+		Options: AllOrderStatusOptions(),
+		Get: func(r ShopOrderListView) column.Value {
+			return column.Value{Enum: r.Status}
+		},
+	},
+	Payment: column.Column[ShopOrderListView]{
+		Name:    "payment",
+		Label:   L10nShopOrderListView_Payment,
+		Kind:    column.Enum,
+		Options: AllPaymentMethodOptions(),
+		Get: func(r ShopOrderListView) column.Value {
+			if !r.Payment.Valid {
+				return column.Value{Null: true}
+			}
+			return column.Value{Enum: r.Payment.PaymentMethod}
+		},
+	},
+	Email: column.Column[ShopOrderListView]{
+		Name:  "email",
+		Label: L10nShopOrderListView_Email,
+		Kind:  column.Text,
+		Get: func(r ShopOrderListView) column.Value {
+			return column.Value{Text: r.Email}
+		},
+	},
+	Order: column.Column[ShopOrderListView]{
+		Name:  "order",
+		Label: L10nShopOrderListView_Order,
+		Kind:  column.Text,
+		Get: func(r ShopOrderListView) column.Value {
+			return column.Value{Text: r.Order}
+		},
+	},
+}
+
+// ShopPageViewColumns are shop_page_view's columns, for a table package (A4).
+var ShopPageViewColumns = struct {
+	ID     column.Column[ShopPageView]
+	Path   column.Column[ShopPageView]
+	SeenAt column.Column[ShopPageView]
+}{
+	ID: column.Column[ShopPageView]{
+		Name:  "id",
+		Label: L10nShopPageView_Id,
+		Kind:  column.Integer,
+		Get: func(r ShopPageView) column.Value {
+			return column.Value{Int: r.ID}
+		},
+	},
+	Path: column.Column[ShopPageView]{
+		Name:  "path",
+		Label: L10nShopPageView_Path,
+		Kind:  column.Text,
+		Get: func(r ShopPageView) column.Value {
+			return column.Value{Text: r.Path}
+		},
+	},
+	SeenAt: column.Column[ShopPageView]{
+		Name:  "seen_at",
+		Label: L10nShopPageView_SeenAt,
+		Kind:  column.Time,
+		Get: func(r ShopPageView) column.Value {
+			if !r.SeenAt.Valid {
+				return column.Value{Null: true}
+			}
+			if m := r.SeenAt.InfinityModifier; m != 0 {
+				return column.Infinite(int8(m))
+			}
+			return column.Value{Time: r.SeenAt.Time}
+		},
+	},
 }

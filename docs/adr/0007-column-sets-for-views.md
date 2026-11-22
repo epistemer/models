@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Proposed, for epistemer (ui's roadmap D7.4) |
+| Status | Accepted by epistemer on 2026-11-22, with the defaults of M1–M5 |
 | Date | 2026-11-22 |
 | Roadmap item | ui D7.4; models v0.4.0 |
 | Deciders | epistemer decided the shape (ui's S2 and S3, 2026-11-22) and decides this text; Claude proposes it, from ui's design of tables (server-state-design.md §6.1, §10) and its spike (§12.1) |
@@ -33,7 +33,7 @@ option's string. §4.3 already says a filter on an enum column takes the
    then knows the driver's null types and the SQL names only by tags.
 3. **Columns written by hand in each app.** What principle 4 rules out.
 
-## Decision (proposed)
+## Decision
 
 Option 1. A new runtime package, `github.com/epistemer/models/column`,
 depending on `option` and i18n as `option` does:
@@ -57,7 +57,7 @@ const (
 // Value is a cell's plain value: the field of its kind, unless Null.
 type Value struct {
 	Null bool
-	Text string             // Text; for Number, the exact digits too
+	Text string             // Text; a numeric's exact digits too
 	Int  int64              // Integer
 	Num  float64            // Number
 	Bool bool               // Bool
@@ -82,7 +82,7 @@ The `views` generator writes, beside each `List<Type>`:
 var OrderSummaryViewColumns = struct {
 	ID, Status, Total, Placed, Note column.Column[OrderSummaryView]
 }{
-	ID:     column.Column[OrderSummaryView]{Name: "id", Label: L10nOrderSummaryView_ID, Kind: column.Integer, Get: func(r OrderSummaryView) column.Value { return column.Value{Int: r.ID} }},
+	ID:     column.Column[OrderSummaryView]{Name: "id", Label: L10nOrderSummaryView_Id, Kind: column.Integer, Get: func(r OrderSummaryView) column.Value { return column.Value{Int: r.ID} }},
 	Status: column.Column[OrderSummaryView]{Name: "status", Label: …, Kind: column.Enum, Options: AllOrderStatusOptions(), Get: …},
 	Note:   column.Column[OrderSummaryView]{Name: "note", …, Get: func(r OrderSummaryView) column.Value {
 		if !r.Note.Valid { return column.Value{Null: true} }
@@ -109,11 +109,15 @@ var OrderSummaryViewColumns = struct {
 - `IN`, `IS NULL` and "contains" in `listing`, which tables will want, are
   each an amendment of their own, later (ui's design §6.5).
 - The labels file is unchanged: the columns reuse the labels' variables,
-  so the views file needs the labels generator's output in the package.
-  `views` without `labels` refuses, as `enums` already does for labels it
-  needs.
+  so `views` needs `labels` and i18n's `labels`, and `enums` for a view
+  with an enum column, as `enums` needs `labels` (interface §2). (The
+  proposal said `views` would refuse without them; a generator can't see
+  which others an app runs, so it is a need, as for `enums`: without them
+  the views file doesn't compile.)
+- `views` no longer works alone, which it did in v0.3.0. Under v0's rules,
+  a minor version.
 
-## Questions for epistemer, each with a default
+## Questions, answered with their defaults
 
 | # | Question | Default |
 |---|---|---|

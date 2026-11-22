@@ -5,8 +5,11 @@ package {{.package}}
 import (
 	"context"
 
+	"github.com/epistemer/models/column"
 	"github.com/epistemer/models/listing"
 )
+
+var _ column.Kind // the import stays when no view has a column of a kind
 
 // Listings is the listing methods of Queries, one per view.
 type Listings interface {
@@ -63,5 +66,46 @@ func (q *Queries) {{.method}}(ctx context.Context, src listing.Source) ([]{{.typ
 		total = int64(lq.Offset + n)
 	}
 	return items, total, nil
+}
+{{end}}
+{{range .views}}{{$type := .type}}
+// {{.type}}Columns are {{.name}}'s columns, for a table package (A4).
+{{- if .left}}
+// Left out, of a type no kind takes:{{range $i, $l := .left}}{{if $i}},{{end}} {{$l}}{{end}}.
+{{- end}}
+var {{.type}}Columns = struct {
+{{- range .colset}}
+	{{.field}} column.Column[{{$type}}]
+{{- end}}
+}{
+{{- range .colset}}
+	{{.field}}: column.Column[{{$type}}]{
+		Name:  {{printf "%q" .name}},
+		Label: {{.label}},
+		Kind:  column.{{.kind}},
+		{{- if .enum}}
+		Options: All{{.enum}}Options(),
+		{{- end}}
+		Get: func(r {{$type}}) column.Value {
+			{{- if .check}}
+			if !r.{{.field}}.Valid {
+				return column.Value{Null: true}
+			}
+			{{- end}}
+			{{- if .infinite}}
+			if m := r.{{.field}}.InfinityModifier; m != 0 {
+				return column.Infinite(int8(m))
+			}
+			{{- end}}
+			{{- if .numeric}}
+			v, _ := r.{{.field}}.Value()
+			digits, _ := v.(string)
+			return column.Numeric(digits)
+			{{- else}}
+			return column.Value{ {{- .value -}} }
+			{{- end}}
+		},
+	},
+{{- end}}
 }
 {{end}}

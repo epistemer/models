@@ -5,8 +5,11 @@ package models
 import (
 	"context"
 
+	"github.com/epistemer/models/column"
 	"github.com/epistemer/models/listing"
 )
+
+var _ column.Kind // the import stays when no view has a column of a kind
 
 // Listings is the listing methods of Queries, one per view.
 type Listings interface {
@@ -63,4 +66,52 @@ func (q *Queries) ListShopOrderListView(ctx context.Context, src listing.Source)
 		total = int64(lq.Offset + n)
 	}
 	return items, total, nil
+}
+
+// ShopOrderListViewColumns are shop_order_list_view's columns, for a table package (A4).
+var ShopOrderListViewColumns = struct {
+	ID       column.Column[ShopOrderListView]
+	Status   column.Column[ShopOrderListView]
+	PlacedAt column.Column[ShopOrderListView]
+	Email    column.Column[ShopOrderListView]
+}{
+	ID: column.Column[ShopOrderListView]{
+		Name:  "id",
+		Label: L10nOrderListView_Id,
+		Kind:  column.Integer,
+		Get: func(r ShopOrderListView) column.Value {
+			return column.Value{Int: r.ID}
+		},
+	},
+	Status: column.Column[ShopOrderListView]{
+		Name:    "status",
+		Label:   L10nOrderListView_Status,
+		Kind:    column.Enum,
+		Options: AllOrderStatusOptions(),
+		Get: func(r ShopOrderListView) column.Value {
+			return column.Value{Enum: r.Status}
+		},
+	},
+	PlacedAt: column.Column[ShopOrderListView]{
+		Name:  "placed_at",
+		Label: L10nOrderListView_PlacedAt,
+		Kind:  column.Time,
+		Get: func(r ShopOrderListView) column.Value {
+			if !r.PlacedAt.Valid {
+				return column.Value{Null: true}
+			}
+			if m := r.PlacedAt.InfinityModifier; m != 0 {
+				return column.Infinite(int8(m))
+			}
+			return column.Value{Time: r.PlacedAt.Time}
+		},
+	},
+	Email: column.Column[ShopOrderListView]{
+		Name:  "email",
+		Label: L10nOrderListView_Email,
+		Kind:  column.Text,
+		Get: func(r ShopOrderListView) column.Value {
+			return column.Value{Text: r.Email}
+		},
+	},
 }

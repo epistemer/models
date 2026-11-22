@@ -318,6 +318,102 @@
       "path": "table.shop_page_view.seen_at",
       "text": "Seen At",
       "var": "L10nPageView_SeenAt"
+    },
+    {
+      "key": "table.shop_kinds_view",
+      "path": "table.shop_kinds_view",
+      "text": "Kinds View",
+      "var": "L10nKindsView"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Id",
+      "path": "table.shop_kinds_view.id",
+      "text": "Id",
+      "var": "L10nKindsView_Id"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Name",
+      "path": "table.shop_kinds_view.name",
+      "text": "Name",
+      "var": "L10nKindsView_Name"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Note",
+      "path": "table.shop_kinds_view.note",
+      "text": "Note",
+      "var": "L10nKindsView_Note"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Ref",
+      "path": "table.shop_kinds_view.ref",
+      "text": "Ref",
+      "var": "L10nKindsView_Ref"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Small",
+      "path": "table.shop_kinds_view.small",
+      "text": "Small",
+      "var": "L10nKindsView_Small"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Medium",
+      "path": "table.shop_kinds_view.medium",
+      "text": "Medium",
+      "var": "L10nKindsView_Medium"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Ratio",
+      "path": "table.shop_kinds_view.ratio",
+      "text": "Ratio",
+      "var": "L10nKindsView_Ratio"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Score",
+      "path": "table.shop_kinds_view.score",
+      "text": "Score",
+      "var": "L10nKindsView_Score"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Price",
+      "path": "table.shop_kinds_view.price",
+      "text": "Price",
+      "var": "L10nKindsView_Price"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Active",
+      "path": "table.shop_kinds_view.active",
+      "text": "Active",
+      "var": "L10nKindsView_Active"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Day",
+      "path": "table.shop_kinds_view.day",
+      "text": "Day",
+      "var": "L10nKindsView_Day"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_At",
+      "path": "table.shop_kinds_view.at",
+      "text": "At",
+      "var": "L10nKindsView_At"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_State",
+      "path": "table.shop_kinds_view.state",
+      "text": "State",
+      "var": "L10nKindsView_State"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Tags",
+      "path": "table.shop_kinds_view.tags",
+      "text": "Tags",
+      "var": "L10nKindsView_Tags"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Meta",
+      "path": "table.shop_kinds_view.meta",
+      "text": "Meta",
+      "var": "L10nKindsView_Meta"
     }
   ],
   "package": {

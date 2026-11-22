@@ -81,8 +81,9 @@ use:
 
 The list form, `- github.com/epistemer/models: [labels, enums]`, uses every
 default. `enums` needs `labels` and i18n's `labels`: its methods return the
-variables those two declare. `labels` works alone, and so does `views`,
-which needs sqlc's `sql_package: "pgx/v5"` (§7).
+variables those two declare. `views` needs them too, for its column sets'
+labels (A4), and `enums` when a view has an enum column, for its options;
+it needs sqlc's `sql_package: "pgx/v5"` (§7). `labels` works alone.
 
 **A blank import**, so the module stays required and genx can find the
 metafile (genx ADR 0003). The file goes in any package of the app and
@@ -271,6 +272,62 @@ func (q *Queries) ListOrderSummaryView(ctx context.Context, src listing.Source) 
 - An app embeds `Listings` in its own interface:
   `type Q interface { Querier; Listings }`.
 
+**Column sets** (A4). Beside each `List<Type>`, the views file declares
+`<Type>Columns`, a struct with one field per column a kind takes (§4.6),
+named as the row's field and in the view's order:
+
+```go
+// OrderSummaryViewColumns are order_summary_view's columns, for a table package (A4).
+// Left out, of a type no kind takes: meta (jsonb).
+var OrderSummaryViewColumns = struct {
+	ID     column.Column[OrderSummaryView]
+	Status column.Column[OrderSummaryView]
+	Note   column.Column[OrderSummaryView]
+}{
+	ID: column.Column[OrderSummaryView]{
+		Name: "id", Label: L10nOrderSummaryView_Id, Kind: column.Integer,
+		Get:  func(r OrderSummaryView) column.Value { return column.Value{Int: r.ID} },
+	},
+	Status: column.Column[OrderSummaryView]{
+		Name: "status", Label: L10nOrderSummaryView_Status, Kind: column.Enum,
+		Options: AllOrderStatusOptions(),
+		Get:     func(r OrderSummaryView) column.Value { return column.Value{Enum: r.Status} },
+	},
+	Note: column.Column[OrderSummaryView]{
+		Name: "note", Label: L10nOrderSummaryView_Note, Kind: column.Text,
+		Get: func(r OrderSummaryView) column.Value {
+			if !r.Note.Valid {
+				return column.Value{Null: true}
+			}
+			return column.Value{Text: r.Note.String}
+		},
+	},
+}
+```
+
+- The kind comes from the column's SQL type as sqlc's pgx/v5 types it:
+
+  | SQL type | Kind | The value |
+  |---|---|---|
+  | `text`, `varchar`, `char`, `citext`, `name` | Text | `Text` |
+  | `uuid` | Text | `Text`, canonical |
+  | `int2`, `int4`, `int8` (and their aliases and serials) | Integer | `Int` |
+  | `float4`, `float8` | Number | `Num` |
+  | `numeric` | Number | `Num` parsed from its exact digits (NaN, ±Inf), and the digits in `Text` |
+  | `bool` | Bool | `Bool` |
+  | `date` | Date | `Time`, midnight UTC; an infinite one has zero `Time` and `Text` "infinity" or "-infinity" |
+  | `timestamp`, `timestamptz` | Time | `Time`; infinite, as for `date` |
+  | an enum of the default schema | Enum | `Enum`, the value; `Options` is `All<Type>Options()` |
+
+- A null is `Value{Null: true}`, unwrapped from pgtype's `Valid` or
+  sqlc's `Null<Type>`.
+- An array, or any other type (json, jsonb, bytea, interval, …), is left
+  out, and the set's comment names it. It stays in the row and the
+  listing.
+- `Label` is the column's variable from the labels file (§5), so the set
+  needs `labels` and i18n's `labels`; an enum column's `Options` needs
+  `enums`.
+
 ### 4.4 Package listing
 
 `github.com/epistemer/models/listing`, no dependencies outside the
@@ -374,6 +431,45 @@ type SelectOption interface {
 models owns this interface, and the form and table packages consume it,
 so models depends on neither (ADR 0006).
 
+### 4.6 Package column
+
+`github.com/epistemer/models/column` (A4), which imports i18n and
+`option` only, as `option` does:
+
+```go
+type Kind uint8 // Text, Integer, Number, Bool, Date, Time, Enum
+func (k Kind) String() string
+
+// Value is a cell's plain value: the field of its kind holds it, unless Null.
+type Value struct {
+	Null bool
+	Text string              // Text; a numeric's exact digits; "infinity" or "-infinity" for an infinite Date or Time
+	Int  int64               // Integer
+	Num  float64             // Number
+	Bool bool                // Bool
+	Time time.Time           // Date (midnight UTC) and Time
+	Enum option.SelectOption // Enum
+}
+
+// Column is one column of a relation whose rows are R.
+type Column[R any] struct {
+	Name    string                // its SQL name
+	Label   i18n.TKer
+	Kind    Kind
+	Options []option.SelectOption // an enum's, in schema order
+	Get     func(R) Value
+}
+
+func UUID(b [16]byte) string     // canonical text, for generated getters
+func Numeric(digits string) Value // a numeric from its exact digits, for generated getters
+func Infinite(sign int8) Value    // an infinite date or time, for generated getters
+```
+
+A column holds what the schema knows, and nothing a page decides: whether
+it is searched, sorted or filtered is the table package's (ADR 0007, ui's
+S22). A column can be built by hand, for a test or for rows that don't come
+from sqlc.
+
 ## 5. Labels
 
 ### 5.1 Naming functions
@@ -459,7 +555,8 @@ ends in `_view`:
 | Two `_view` relations with one `<Type>` | `models: views "id_view" and "ID_view" both give sqlc the Go type "IDView"` |
 | A query whose name, as written, is a method `List<Type>` | `models: query "ListOrderSummaryView" clashes with the listing method of view "order_summary_view"` |
 | An enum whose `structName` is `Listings`, the type sqlc would then declare (a query named `Listings` gives a method and the constant `listings`, which don't clash) | `models: enum "listings" gives sqlc the Go name "Listings", which views declares` |
-| A query whose sqlc constant (its name with the first letter lower-cased) hides a name the views file uses: `listing`, `context`, `append`, `len`, `nil`, `int64`, `string` or `error` | `models: query "Listing" gives sqlc the constant "listing", which hides a name the views file uses` |
+| A query whose sqlc constant (its name with the first letter lower-cased) hides a name the views file uses: `listing`, `column` (A4), `context`, `append`, `len`, `nil`, `int64`, `string` or `error` | `models: query "Listing" gives sqlc the constant "listing", which hides a name the views file uses` |
+| A view's column set `<Type>Columns` (A4) is already a query's, a relation's or an enum's Go name | `models: view "order_view": its column set "OrderViewColumns" is already a query's, a relation's or an enum's Go name` |
 
 Made by every generator, like the shared cases above it (A3):
 
@@ -494,6 +591,8 @@ a refusal, or a method nothing calls; never in a wrong key.
 | A method `Value` on an enum type, or a package-level `All<Type>Options`, of the app's own (A3); a table whose sqlc type, made singular, is `All<Type>Options` | `Value redeclared` or `All<Type>Options redeclared`. An enum type can't also be a `driver.Valuer`, whose `Value` has another signature |
 | `emit_methods_with_db_argument: true` | `Queries` has no `db`: `zz_<package>_views.go` doesn't compile |
 | A table whose sqlc type is `Listings` (sqlc's singular of its name, which models can't compute) | `Listings redeclared` |
+| `emit_pointers_for_null_types: true`, or a column `overrides` entry, on a `_view` relation (A4) | the column set's getters read pgtype's or sqlc's null types: `zz_<package>_views.go` doesn't compile (`has no field`) |
+| `views` without `labels` and i18n's `labels`, or without `enums` for a view with an enum column (A4) | `undefined: L10n…` or `undefined: All<Type>Options` |
 
 ## 8. Testing an app
 
@@ -560,12 +659,12 @@ refusal (§6) and one limit (§7). `List<Type>`'s parameter type changes, and
 the enums file gains declarations: a minor version, `v0.3.0`, under v0's
 rules.
 
-### A4. Column sets for views (proposed 2026-11-22, for v0.4.0)
+### A4. Column sets for views (2026-11-22, for v0.4.0)
 
-Proposed by Claude for epistemer, from ui's design of tables (its D7.4):
+Accepted by epistemer on 2026-11-22 with the defaults of M1–M5, from ui's
+design of tables (its D7.4):
 package `column` (`Kind`, `Value`, `Column[R]`), and a `<Type>Columns`
 set the `views` generator writes beside each `List<Type>`. The design is
-[ADR 0007](adr/0007-column-sets-for-views.md), with five questions
-(M1–M5) that carry defaults. A new package and new declarations: a minor
-version, `v0.4.0`. §4.3 and §6 change when it is accepted.
+[ADR 0007](adr/0007-column-sets-for-views.md). A new package and new
+declarations: a minor version, `v0.4.0`. §4.3 and §4.6 state it.
 
