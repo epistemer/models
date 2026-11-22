@@ -559,3 +559,13 @@ package `option` with `SelectOption` (§4.5); `Value()` and
 refusal (§6) and one limit (§7). `List<Type>`'s parameter type changes, and
 the enums file gains declarations: a minor version, `v0.3.0`, under v0's
 rules.
+
+### A4. Column sets for views (proposed 2026-11-22, for v0.4.0)
+
+Proposed by Claude for epistemer, from ui's design of tables (its D7.4):
+package `column` (`Kind`, `Value`, `Column[R]`), and a `<Type>Columns`
+set the `views` generator writes beside each `List<Type>`. The design is
+[ADR 0007](adr/0007-column-sets-for-views.md), with five questions
+(M1–M5) that carry defaults. A new package and new declarations: a minor
+version, `v0.4.0`. §4.3 and §6 change when it is accepted.
+

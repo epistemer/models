@@ -3,6 +3,15 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-22 — A4 proposed: column sets for views
+
+**Proposed** (Claude), for epistemer: [ADR 0007](adr/0007-column-sets-for-views.md)
+and amendment A4: package `column`, and a `<Type>Columns` set per view.
+It follows ui's design of tables (S2, S3 and S22, decided by epistemer)
+and ui's spike (D7.2), which ran a table on the same shape declared
+locally. Five questions (M1–M5) have defaults. Nothing is built until
+epistemer accepts it.
+
 ## 2026-11-16: interfaces for UI packages (M6, v0.3.0)
 
 - **You said** (2026-11-16): moving zp onto neozp is out of neozp's scope,
