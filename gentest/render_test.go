@@ -475,7 +475,11 @@ func TestPgxRefusals(t *testing.T) {
 			if !strings.Contains(f.msg, c.want) {
 				t.Errorf("message:\n%s\nwant it to contain:\n%s", f.msg, c.want)
 			}
-			for _, g := range []string{"labels", "views"} {
+			others := []string{"labels", "views"}
+			if !strings.Contains(c.want, `"string"`) && !strings.Contains(c.want, `"error"`) && !strings.Contains(c.want, `"nil"`) {
+				others = append(others, "enums") // names the enums file doesn't use
+			}
+			for _, g := range others {
 				f := &failure{TB: t}
 				genxtest.RenderParams(f, root, g, nil, c.input(t))
 				if f.msg != "" {

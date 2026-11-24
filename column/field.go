@@ -214,11 +214,7 @@ func resolveReflectReader(k Kind, ft, fieldType reflect.Type) func(reflect.Value
 
 	case reflect.Array:
 		if ft.Len() == 16 && ft.Elem().Kind() == reflect.Uint8 && k == Text {
-			return func(rv reflect.Value) Value {
-				var b [16]byte
-				reflect.Copy(reflect.ValueOf(&b).Elem(), rv)
-				return Value{Text: UUID(b)}
-			}
+			return func(rv reflect.Value) Value { return Value{Text: UUID(bytes16(rv))} }
 		}
 	}
 
@@ -295,6 +291,9 @@ func readValuerResult(k Kind, fieldType reflect.Type, res driver.Value) Value {
 // is neither or already unnamed.
 func normalize(k Kind, res driver.Value) (driver.Value, bool) {
 	rv := reflect.ValueOf(res)
+	if t := rv.Type(); t.PkgPath() == "" && t.Name() != "" {
+		return nil, false // a predeclared type, which readValuerResult already took or refused
+	}
 	var n any
 	switch rv.Kind() {
 	case reflect.String:
@@ -316,14 +315,9 @@ func normalize(k Kind, res driver.Value) (driver.Value, bool) {
 		if k != Text || rv.Len() != 16 || rv.Type().Elem().Kind() != reflect.Uint8 {
 			return nil, false
 		}
-		var b [16]byte
-		reflect.Copy(reflect.ValueOf(&b).Elem(), rv)
-		n = UUID(b)
+		n = UUID(bytes16(rv))
 	default:
 		return nil, false
-	}
-	if reflect.TypeOf(n) == rv.Type() {
-		return nil, false // already unnamed: the kind can't take it
 	}
 	return n, true
 }
@@ -356,4 +350,14 @@ func asInt64(v any) (int64, bool) {
 
 func panicUnsupported(k Kind, fieldType reflect.Type) {
 	panic(fmt.Sprintf("column: %s can't read %s", k, fieldType))
+}
+
+// bytes16 copies a [16] array of a byte kind, named or not, such as
+// uuid.UUID or [16]myByte.
+func bytes16(rv reflect.Value) [16]byte {
+	var b [16]byte
+	for i := range b {
+		b[i] = byte(rv.Index(i).Uint())
+	}
+	return b
 }

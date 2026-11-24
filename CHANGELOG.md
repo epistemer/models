@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.5.1 (2026-11-24)
+
+Fixes from review 0015 of A5.
+
+- `column.Field` reads a `[16]` array of a named byte type (it panicked),
+  and a panic on a Valuer's value names the value's own type.
+- Docs: `pgx` needs pgx v5.7.0 or later, not v5.6.0; sqlc's `db_type`
+  spellings in interface §4.3; wording in §0, §2, §3, §4 and A5.5.
+
 ## v0.5.0 (2026-11-24)
 
 Confab iteration 1's findings, amendment A5 (ADR 0008), locked by
