@@ -138,9 +138,9 @@ A5.1's design is [ADR 0008](adr/0008-column-sets-read-any-field.md).
 |---|----|------|------|-----------|
 | ☑ | M7.0 | F2: `table_prefix`'s trade-off documented where it's introduced (interface §3, README) | S | Merged (#15) |
 | ☑ | M7.1 | A5 drafted, locked by epistemer, and stated in interface.md and ADR 0008 | S | Locked |
-| ☐ | M7.2 | `column.Field` (A5.1) and `option.Static` (A5.4) | S | Unit tests of every row of A5.1's tables, the init-time panic and a row-time one |
-| ☐ | M7.3 | The enums file's text methods (A5.2), enum values' English text (A5.5), the `pgx` generator (A5.3) | M | Goldens rendered twice; the conformance check passes; each new refusal tested; `RegisterTypes` and the text methods tested against PostgreSQL |
-| ☐ | M7.4 | Column sets through `column.Field`; `gentest` runs the shop's listing and column sets with sqlc's defaults and with pointers plus overrides | M | The PostgreSQL test passes on both configurations |
+| ☑ | M7.2 | `column.Field` (A5.1) and `option.Static` (A5.4) | S | Unit tests of every row of A5.1's tables, the init-time panic and a row-time one |
+| ☑ | M7.3 | The enums file's text methods (A5.2), enum values' English text (A5.5), the `pgx` generator (A5.3) | M | Goldens rendered twice; the conformance check passes; each new refusal tested; `RegisterTypes` and the text methods tested against PostgreSQL |
+| ☑ | M7.4 | Column sets through `column.Field`; `gentest` runs the shop's listing and column sets with sqlc's defaults and with pointers plus overrides | M | The PostgreSQL test passes on both configurations |
 | ☐ | M7.5 | The example, docs, the skill, a cross-model review, CHANGELOG and tag `v0.5.0` | S | Tag pushed |
 
 ## After v0.3.0 (backlog)
