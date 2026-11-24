@@ -7,7 +7,7 @@ taken for you, what's next, and what's waiting on you.
 
 **Locked** by epistemer on 2026-11-24 with every default (A5.1a–c,
 A5.3a–b), from Confab's findings F5, F8, F15, F19 and F28 and epistemer's
-answers on the board. ADR 0008 for A5.1. **Released** as v0.5.0 (#16).
+answers on the board. ADR 0008 for A5.1. **Released** as v0.5.0 (#16), checked through proxy.golang.org.
 
 **Landed:**
 - F2 (#15, docs only): `table_prefix`'s trade-off, that sqlc keeps the
