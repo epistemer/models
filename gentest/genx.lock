@@ -3,4 +3,5 @@
 shop/zz_shop.labels.json github.com/epistemer/models:labels
 shop/zz_shop_enums.go github.com/epistemer/models:enums
 shop/zz_shop_i18n.go github.com/epistemer/i18n:labels
+shop/zz_shop_pgx.go github.com/epistemer/models:pgx
 shop/zz_shop_views.go github.com/epistemer/models:views

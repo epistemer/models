@@ -4,25 +4,25 @@
     {
       "key": "enum.order_status.pending",
       "path": "enum.order_status.pending",
-      "text": "pending",
+      "text": "Pending",
       "var": "L10nOrderStatusPending"
     },
     {
       "key": "enum.order_status.paid",
       "path": "enum.order_status.paid",
-      "text": "paid",
+      "text": "Paid",
       "var": "L10nOrderStatusPaid"
     },
     {
       "key": "enum.order_status.shipped",
       "path": "enum.order_status.shipped",
-      "text": "shipped",
+      "text": "Shipped",
       "var": "L10nOrderStatusShipped"
     },
     {
       "key": "enum.order_status.cancelled",
       "path": "enum.order_status.cancelled",
-      "text": "cancelled",
+      "text": "Cancelled",
       "var": "L10nOrderStatusCancelled"
     },
     {

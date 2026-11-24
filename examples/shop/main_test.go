@@ -32,7 +32,7 @@ func TestTranslated(t *testing.T) {
 	fr := i18ntest.Context(t, tr, "fr")
 	for _, c := range []struct{ got, want string }{
 		{models.OrderStatusPaid.Label().T(fr), "payée"},
-		{models.OrderStatusShipped.Label().T(fr), "shipped"}, // not translated: the code's text
+		{models.OrderStatusShipped.Label().T(fr), "Shipped"}, // not translated: the code's text
 		{models.L10nOrder.T(fr), "Commande"},
 		{models.L10nOrder_Status.T(fr), "Status"},
 		{models.L10n("table.shop_customer.email").T(fr), "Adresse e-mail"},
