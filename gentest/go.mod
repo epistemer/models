@@ -8,7 +8,9 @@ require (
 	github.com/epistemer/genx v0.2.0
 	github.com/epistemer/i18n v0.2.0
 	github.com/epistemer/models v0.0.0-20261114012404-fbeb5e9d81be
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.4
+	github.com/shopspring/decimal v1.6.0
 )
 
 require (

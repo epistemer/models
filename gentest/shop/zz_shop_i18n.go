@@ -71,6 +71,8 @@ var (
 	L10nKindsView_Active            = i18n.Key("table.shop_kinds_view.KindsView_Active", "Active")
 	L10nKindsView_Day               = i18n.Key("table.shop_kinds_view.KindsView_Day", "Day")
 	L10nKindsView_At                = i18n.Key("table.shop_kinds_view.KindsView_At", "At")
+	L10nKindsView_Seen              = i18n.Key("table.shop_kinds_view.KindsView_Seen", "Seen")
+	L10nKindsView_Span              = i18n.Key("table.shop_kinds_view.KindsView_Span", "Span")
 	L10nKindsView_State             = i18n.Key("table.shop_kinds_view.KindsView_State", "State")
 	L10nKindsView_Tags              = i18n.Key("table.shop_kinds_view.KindsView_Tags", "Tags")
 	L10nKindsView_Meta              = i18n.Key("table.shop_kinds_view.KindsView_Meta", "Meta")
@@ -144,6 +146,8 @@ var l10n = map[string]i18n.TKer{
 	"table.shop_kinds_view.active":         L10nKindsView_Active,
 	"table.shop_kinds_view.day":            L10nKindsView_Day,
 	"table.shop_kinds_view.at":             L10nKindsView_At,
+	"table.shop_kinds_view.seen":           L10nKindsView_Seen,
+	"table.shop_kinds_view.span":           L10nKindsView_Span,
 	"table.shop_kinds_view.state":          L10nKindsView_State,
 	"table.shop_kinds_view.tags":           L10nKindsView_Tags,
 	"table.shop_kinds_view.meta":           L10nKindsView_Meta,

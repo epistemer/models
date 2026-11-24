@@ -198,38 +198,22 @@ defs: |
   # sql_type: a column's SQL type name, without pg_catalog's qualification.
   def sql_type($ds): ((.type.name // "") | sub("^(pg_catalog|\($ds))\\."; ""));
 
-  # column_how: how a view column's getter reads its field (§4.6, A4), from
-  # its SQL type and nullability as sqlc's pgx/v5 types it; null for a type
-  # no kind takes, which the set leaves out. $enums: the schema's enum names.
+  # column_how: a view column's kind (§4.6, A4), from its SQL type; null
+  # for a type no kind takes, which the set leaves out. Every getter but an
+  # enum's is column.Field, which reads whatever Go type sqlc gives the
+  # field (A5); an enum's reads sqlc's <Type> or Null<Type>, which sqlc
+  # keeps with emit_pointers_for_null_types. $enums: the schema's enum names.
   def column_how($f; $ds; $enums):
     (.not_null // false) as $nn
     | sql_type($ds) as $t
     | if (.is_array // false) then null
-      elif $t | IN("text", "varchar", "bpchar", "char", "citext", "name") then
-        if $nn then {kind: "Text", check: false, value: "Text: r.\($f)"}
-        else {kind: "Text", check: true, value: "Text: r.\($f).String"} end
-      elif $t == "uuid" then {kind: "Text", check: true, value: "Text: column.UUID(r.\($f).Bytes)"}
-      elif $t | IN("int2", "smallint", "smallserial", "serial2") then
-        if $nn then {kind: "Integer", check: false, value: "Int: int64(r.\($f))"}
-        else {kind: "Integer", check: true, value: "Int: int64(r.\($f).Int16)"} end
-      elif $t | IN("int4", "integer", "int", "serial", "serial4") then
-        if $nn then {kind: "Integer", check: false, value: "Int: int64(r.\($f))"}
-        else {kind: "Integer", check: true, value: "Int: int64(r.\($f).Int32)"} end
-      elif $t | IN("int8", "bigint", "bigserial", "serial8") then
-        if $nn then {kind: "Integer", check: false, value: "Int: r.\($f)"}
-        else {kind: "Integer", check: true, value: "Int: r.\($f).Int64"} end
-      elif $t | IN("float4", "real") then
-        if $nn then {kind: "Number", check: false, value: "Num: float64(r.\($f))"}
-        else {kind: "Number", check: true, value: "Num: float64(r.\($f).Float32)"} end
-      elif $t | IN("float8", "double precision") then
-        if $nn then {kind: "Number", check: false, value: "Num: r.\($f)"}
-        else {kind: "Number", check: true, value: "Num: r.\($f).Float64"} end
-      elif $t | IN("numeric", "decimal") then {kind: "Number", check: true, numeric: true}
-      elif $t | IN("bool", "boolean") then
-        if $nn then {kind: "Bool", check: false, value: "Bool: r.\($f)"}
-        else {kind: "Bool", check: true, value: "Bool: r.\($f).Bool"} end
-      elif $t == "date" then {kind: "Date", check: true, infinite: true, value: "Time: r.\($f).Time"}
-      elif $t | IN("timestamp", "timestamptz") then {kind: "Time", check: true, infinite: true, value: "Time: r.\($f).Time"}
+      elif $t | IN("text", "varchar", "bpchar", "char", "citext", "name", "uuid") then {kind: "Text"}
+      elif $t | IN("int2", "smallint", "smallserial", "serial2", "int4", "integer", "int",
+                   "serial", "serial4", "int8", "bigint", "bigserial", "serial8") then {kind: "Integer"}
+      elif $t | IN("float4", "real", "float8", "double precision", "numeric", "decimal") then {kind: "Number"}
+      elif $t | IN("bool", "boolean") then {kind: "Bool"}
+      elif $t == "date" then {kind: "Date"}
+      elif $t | IN("timestamp", "timestamptz") then {kind: "Time"}
       elif $t | IN($enums[]) then
         ($t | struct_name) as $E
         | if $nn then {kind: "Enum", check: false, value: "Enum: r.\($f)", enum: $E}
@@ -293,8 +277,8 @@ defs: |
               | if $how == null then {name: $c.name, field: $f, left: (($c | sql_type($c0.default_schema)) + (if ($c.is_array // false) then "[]" else "" end))}
                 else {name: $c.name, field: $f,
                       label: "L10n\($T)_\($c.name | strip($p.prefix) | zp_pascal)",
-                      kind: $how.kind, check: $how.check, infinite: ($how.infinite // false),
-                      numeric: ($how.numeric // false), value: ($how.value // ""), enum: ($how.enum // "")}
+                      kind: $how.kind, check: ($how.check // false),
+                      value: ($how.value // ""), enum: ($how.enum // "")}
                 end] as $set
            | {name: $v, type: $type, method: "List\($type)", columns: $cols,
               colset: [$set[] | select(.left == null)],

@@ -137,6 +137,8 @@ func (q *Queries) ListShopKindsView(ctx context.Context, src listing.Source) ([]
 		"active",
 		"day",
 		"at",
+		"seen",
+		"span",
 		"state",
 		"tags",
 		"meta",
@@ -165,6 +167,8 @@ func (q *Queries) ListShopKindsView(ctx context.Context, src listing.Source) ([]
 			&i.Active,
 			&i.Day,
 			&i.At,
+			&i.Seen,
+			&i.Span,
 			&i.State,
 			&i.Tags,
 			&i.Meta,
@@ -204,9 +208,7 @@ var ShopOrderListViewColumns = struct {
 		Name:  "id",
 		Label: L10nOrderListView_Id,
 		Kind:  column.Integer,
-		Get: func(r ShopOrderListView) column.Value {
-			return column.Value{Int: r.ID}
-		},
+		Get:   column.Field(column.Integer, func(r ShopOrderListView) any { return r.ID }),
 	},
 	Status: column.Column[ShopOrderListView]{
 		Name:    "status",
@@ -233,17 +235,13 @@ var ShopOrderListViewColumns = struct {
 		Name:  "email",
 		Label: L10nOrderListView_Email,
 		Kind:  column.Text,
-		Get: func(r ShopOrderListView) column.Value {
-			return column.Value{Text: r.Email}
-		},
+		Get:   column.Field(column.Text, func(r ShopOrderListView) any { return r.Email }),
 	},
 	Order: column.Column[ShopOrderListView]{
 		Name:  "order",
 		Label: L10nOrderListView_Order,
 		Kind:  column.Text,
-		Get: func(r ShopOrderListView) column.Value {
-			return column.Value{Text: r.Order}
-		},
+		Get:   column.Field(column.Text, func(r ShopOrderListView) any { return r.Order }),
 	},
 }
 
@@ -257,36 +255,24 @@ var ShopPageViewColumns = struct {
 		Name:  "id",
 		Label: L10nPageView_Id,
 		Kind:  column.Integer,
-		Get: func(r ShopPageView) column.Value {
-			return column.Value{Int: r.ID}
-		},
+		Get:   column.Field(column.Integer, func(r ShopPageView) any { return r.ID }),
 	},
 	Path: column.Column[ShopPageView]{
 		Name:  "path",
 		Label: L10nPageView_Path,
 		Kind:  column.Text,
-		Get: func(r ShopPageView) column.Value {
-			return column.Value{Text: r.Path}
-		},
+		Get:   column.Field(column.Text, func(r ShopPageView) any { return r.Path }),
 	},
 	SeenAt: column.Column[ShopPageView]{
 		Name:  "seen_at",
 		Label: L10nPageView_SeenAt,
 		Kind:  column.Time,
-		Get: func(r ShopPageView) column.Value {
-			if !r.SeenAt.Valid {
-				return column.Value{Null: true}
-			}
-			if m := r.SeenAt.InfinityModifier; m != 0 {
-				return column.Infinite(int8(m))
-			}
-			return column.Value{Time: r.SeenAt.Time}
-		},
+		Get:   column.Field(column.Time, func(r ShopPageView) any { return r.SeenAt }),
 	},
 }
 
 // ShopKindsViewColumns are shop_kinds_view's columns, for a table package (A4).
-// Left out, of a type no kind takes: tags (text[]), meta (jsonb).
+// Left out, of a type no kind takes: span (interval), tags (text[]), meta (jsonb).
 var ShopKindsViewColumns = struct {
 	ID     column.Column[ShopKindsView]
 	Name   column.Column[ShopKindsView]
@@ -300,135 +286,86 @@ var ShopKindsViewColumns = struct {
 	Active column.Column[ShopKindsView]
 	Day    column.Column[ShopKindsView]
 	At     column.Column[ShopKindsView]
+	Seen   column.Column[ShopKindsView]
 	State  column.Column[ShopKindsView]
 }{
 	ID: column.Column[ShopKindsView]{
 		Name:  "id",
 		Label: L10nKindsView_Id,
 		Kind:  column.Integer,
-		Get: func(r ShopKindsView) column.Value {
-			return column.Value{Int: r.ID}
-		},
+		Get:   column.Field(column.Integer, func(r ShopKindsView) any { return r.ID }),
 	},
 	Name: column.Column[ShopKindsView]{
 		Name:  "name",
 		Label: L10nKindsView_Name,
 		Kind:  column.Text,
-		Get: func(r ShopKindsView) column.Value {
-			return column.Value{Text: r.Name}
-		},
+		Get:   column.Field(column.Text, func(r ShopKindsView) any { return r.Name }),
 	},
 	Note: column.Column[ShopKindsView]{
 		Name:  "note",
 		Label: L10nKindsView_Note,
 		Kind:  column.Text,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.Note.Valid {
-				return column.Value{Null: true}
-			}
-			return column.Value{Text: r.Note.String}
-		},
+		Get:   column.Field(column.Text, func(r ShopKindsView) any { return r.Note }),
 	},
 	Ref: column.Column[ShopKindsView]{
 		Name:  "ref",
 		Label: L10nKindsView_Ref,
 		Kind:  column.Text,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.Ref.Valid {
-				return column.Value{Null: true}
-			}
-			return column.Value{Text: column.UUID(r.Ref.Bytes)}
-		},
+		Get:   column.Field(column.Text, func(r ShopKindsView) any { return r.Ref }),
 	},
 	Small: column.Column[ShopKindsView]{
 		Name:  "small",
 		Label: L10nKindsView_Small,
 		Kind:  column.Integer,
-		Get: func(r ShopKindsView) column.Value {
-			return column.Value{Int: int64(r.Small)}
-		},
+		Get:   column.Field(column.Integer, func(r ShopKindsView) any { return r.Small }),
 	},
 	Medium: column.Column[ShopKindsView]{
 		Name:  "medium",
 		Label: L10nKindsView_Medium,
 		Kind:  column.Integer,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.Medium.Valid {
-				return column.Value{Null: true}
-			}
-			return column.Value{Int: int64(r.Medium.Int32)}
-		},
+		Get:   column.Field(column.Integer, func(r ShopKindsView) any { return r.Medium }),
 	},
 	Ratio: column.Column[ShopKindsView]{
 		Name:  "ratio",
 		Label: L10nKindsView_Ratio,
 		Kind:  column.Number,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.Ratio.Valid {
-				return column.Value{Null: true}
-			}
-			return column.Value{Num: float64(r.Ratio.Float32)}
-		},
+		Get:   column.Field(column.Number, func(r ShopKindsView) any { return r.Ratio }),
 	},
 	Score: column.Column[ShopKindsView]{
 		Name:  "score",
 		Label: L10nKindsView_Score,
 		Kind:  column.Number,
-		Get: func(r ShopKindsView) column.Value {
-			return column.Value{Num: r.Score}
-		},
+		Get:   column.Field(column.Number, func(r ShopKindsView) any { return r.Score }),
 	},
 	Price: column.Column[ShopKindsView]{
 		Name:  "price",
 		Label: L10nKindsView_Price,
 		Kind:  column.Number,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.Price.Valid {
-				return column.Value{Null: true}
-			}
-			v, _ := r.Price.Value()
-			digits, _ := v.(string)
-			return column.Numeric(digits)
-		},
+		Get:   column.Field(column.Number, func(r ShopKindsView) any { return r.Price }),
 	},
 	Active: column.Column[ShopKindsView]{
 		Name:  "active",
 		Label: L10nKindsView_Active,
 		Kind:  column.Bool,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.Active.Valid {
-				return column.Value{Null: true}
-			}
-			return column.Value{Bool: r.Active.Bool}
-		},
+		Get:   column.Field(column.Bool, func(r ShopKindsView) any { return r.Active }),
 	},
 	Day: column.Column[ShopKindsView]{
 		Name:  "day",
 		Label: L10nKindsView_Day,
 		Kind:  column.Date,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.Day.Valid {
-				return column.Value{Null: true}
-			}
-			if m := r.Day.InfinityModifier; m != 0 {
-				return column.Infinite(int8(m))
-			}
-			return column.Value{Time: r.Day.Time}
-		},
+		Get:   column.Field(column.Date, func(r ShopKindsView) any { return r.Day }),
 	},
 	At: column.Column[ShopKindsView]{
 		Name:  "at",
 		Label: L10nKindsView_At,
 		Kind:  column.Time,
-		Get: func(r ShopKindsView) column.Value {
-			if !r.At.Valid {
-				return column.Value{Null: true}
-			}
-			if m := r.At.InfinityModifier; m != 0 {
-				return column.Infinite(int8(m))
-			}
-			return column.Value{Time: r.At.Time}
-		},
+		Get:   column.Field(column.Time, func(r ShopKindsView) any { return r.At }),
+	},
+	Seen: column.Column[ShopKindsView]{
+		Name:  "seen",
+		Label: L10nKindsView_Seen,
+		Kind:  column.Time,
+		Get:   column.Field(column.Time, func(r ShopKindsView) any { return r.Seen }),
 	},
 	State: column.Column[ShopKindsView]{
 		Name:    "state",

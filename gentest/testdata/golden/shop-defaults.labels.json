@@ -398,6 +398,18 @@
       "var": "L10nShopKindsView_At"
     },
     {
+      "key": "table.shop_kinds_view.ShopKindsView_Seen",
+      "path": "table.shop_kinds_view.seen",
+      "text": "Seen",
+      "var": "L10nShopKindsView_Seen"
+    },
+    {
+      "key": "table.shop_kinds_view.ShopKindsView_Span",
+      "path": "table.shop_kinds_view.span",
+      "text": "Span",
+      "var": "L10nShopKindsView_Span"
+    },
+    {
       "key": "table.shop_kinds_view.ShopKindsView_State",
       "path": "table.shop_kinds_view.state",
       "text": "State",

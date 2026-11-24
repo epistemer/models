@@ -85,26 +85,17 @@ var {{.type}}Columns = struct {
 		Kind:  column.{{.kind}},
 		{{- if .enum}}
 		Options: All{{.enum}}Options(),
-		{{- end}}
 		Get: func(r {{$type}}) column.Value {
 			{{- if .check}}
 			if !r.{{.field}}.Valid {
 				return column.Value{Null: true}
 			}
 			{{- end}}
-			{{- if .infinite}}
-			if m := r.{{.field}}.InfinityModifier; m != 0 {
-				return column.Infinite(int8(m))
-			}
-			{{- end}}
-			{{- if .numeric}}
-			v, _ := r.{{.field}}.Value()
-			digits, _ := v.(string)
-			return column.Numeric(digits)
-			{{- else}}
 			return column.Value{ {{- .value -}} }
-			{{- end}}
 		},
+		{{- else}}
+		Get: column.Field(column.{{.kind}}, func(r {{$type}}) any { return r.{{.field}} }),
+		{{- end}}
 	},
 {{- end}}
 }

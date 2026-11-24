@@ -84,8 +84,9 @@ CREATE TABLE shop_page_view (
 );
 
 -- Column sets (interface §4.6, A4): a column of every kind, nullable and
--- not, and two of types no kind takes (an array, jsonb), which the set
--- leaves out.
+-- not, and three of types no kind takes (an array, jsonb, interval), which
+-- the set leaves out. gentest/shopptr reads the same columns through
+-- sqlc's pointers and overrides (A5).
 CREATE TABLE shop_kinds_view (
   id bigint PRIMARY KEY,
   name text NOT NULL,
@@ -99,6 +100,8 @@ CREATE TABLE shop_kinds_view (
   active boolean,
   day date NOT NULL,
   at timestamp,
+  seen timestamptz,
+  span interval,
   state order_status,
   tags text[],
   meta jsonb

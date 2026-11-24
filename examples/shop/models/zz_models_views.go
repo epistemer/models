@@ -79,9 +79,7 @@ var ShopOrderListViewColumns = struct {
 		Name:  "id",
 		Label: L10nOrderListView_Id,
 		Kind:  column.Integer,
-		Get: func(r ShopOrderListView) column.Value {
-			return column.Value{Int: r.ID}
-		},
+		Get:   column.Field(column.Integer, func(r ShopOrderListView) any { return r.ID }),
 	},
 	Status: column.Column[ShopOrderListView]{
 		Name:    "status",
@@ -96,22 +94,12 @@ var ShopOrderListViewColumns = struct {
 		Name:  "placed_at",
 		Label: L10nOrderListView_PlacedAt,
 		Kind:  column.Time,
-		Get: func(r ShopOrderListView) column.Value {
-			if !r.PlacedAt.Valid {
-				return column.Value{Null: true}
-			}
-			if m := r.PlacedAt.InfinityModifier; m != 0 {
-				return column.Infinite(int8(m))
-			}
-			return column.Value{Time: r.PlacedAt.Time}
-		},
+		Get:   column.Field(column.Time, func(r ShopOrderListView) any { return r.PlacedAt }),
 	},
 	Email: column.Column[ShopOrderListView]{
 		Name:  "email",
 		Label: L10nOrderListView_Email,
 		Kind:  column.Text,
-		Get: func(r ShopOrderListView) column.Value {
-			return column.Value{Text: r.Email}
-		},
+		Get:   column.Field(column.Text, func(r ShopOrderListView) any { return r.Email }),
 	},
 }
