@@ -93,7 +93,7 @@ use:
   - github.com/epistemer/i18n: [labels]
 ```
 
-`views` and `pgx` need sqlc's `sql_package: "pgx/v5"` (`pgx` needs v5.6.0
+`views` and `pgx` need sqlc's `sql_package: "pgx/v5"` (`pgx` needs v5.7.0
 or later); leave `views` out of the list if the app has no view whose name
 ends in `_view`, and both if it uses another driver.
 

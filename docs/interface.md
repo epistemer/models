@@ -86,7 +86,7 @@ default. `enums` needs `labels` and i18n's `labels`: its methods return the
 variables those two declare. `views` needs them too, for its column sets'
 labels (A4), and `enums` when a view has an enum column, for its options;
 it needs sqlc's `sql_package: "pgx/v5"` (§7). `pgx` needs pgx/v5 too,
-v5.6.0 or later, and nothing else of models'. `labels` works alone.
+v5.7.0 or later, and nothing else of models'. `labels` works alone.
 
 **A blank import**, so the module stays required and genx can find the
 metafile (genx ADR 0003). The file goes in any package of the app and
@@ -598,7 +598,7 @@ func RegisterTypes(ctx context.Context, conn *pgx.Conn) error {
   each enum followed by its array, which PostgreSQL names `_` plus the
   enum's name. pgx matches names as written, so none is quoted.
 - An app wires it as `cfg.AfterConnect = models.RegisterTypes` on its
-  `pgxpool.Config`. It needs pgx v5.6.0 or later, which added `LoadTypes`.
+  `pgxpool.Config`. It needs pgx v5.7.0 or later, which added `LoadTypes` and `Map.RegisterTypes`.
 - `pgx` keeps `enums` free of the driver, so `labels` and `enums` still
   work on any `sql_package`.
 
@@ -749,7 +749,7 @@ a refusal, or a method nothing calls; never in a wrong key.
 | A method `MarshalText` or `UnmarshalText` on an enum type, of the app's own (A5) | `MarshalText redeclared` |
 | An enum whose array PostgreSQL didn't name `_<enum>` (a name of 63 bytes, or a clash) (A5) | `RegisterTypes` fails on connect, from pgx's `LoadTypes` |
 | A function `RegisterTypes` of the app's own in the package, or a table whose sqlc type, made singular, is `RegisterTypes` (A5) | `RegisterTypes redeclared` |
-| `pgx` with pgx older than v5.6.0 (A5) | `conn.LoadTypes undefined` |
+| `pgx` with pgx older than v5.7.0 (A5) | `conn.LoadTypes undefined` |
 | `views` without `labels` and i18n's `labels`, or without `enums` for a view with an enum column (A4) | `undefined: L10n…` or `undefined: All<Type>Options` |
 
 ## 8. Testing an app
@@ -988,7 +988,7 @@ func RegisterTypes(ctx context.Context, conn *pgx.Conn) error {
 - Names are schema-qualified with the request's default schema, in §4.1's
   order, each enum followed by its array, which PostgreSQL names `_` plus
   the enum's name. pgx matches names as written, so no quoting is needed.
-- It needs pgx v5.6.0 or later, which added `LoadTypes`.
+- It needs pgx v5.7.0 or later, which added `LoadTypes` and `Map.RegisterTypes`.
 - An app wires it as `cfg.AfterConnect = models.RegisterTypes`.
 - New refusals, made by `pgx` only: an enum whose Go type is
   `RegisterTypes`; a query whose constant hides a name the file uses
@@ -1053,5 +1053,7 @@ query whose constant hides a name that file uses (§6), as `views` and
 `pgx` do for theirs. A `driver.Valuer` whose value is of a named basic
 type, or a `[16]byte` for Text, is read by the same rules as a field of
 that type. A field that is a pointer to an interface is refused when the
-set is declared. Each refuses only apps whose generated code couldn't
+set is declared. `pgx` needs pgx v5.7.0 or later, which added `LoadTypes`
+and `Map.RegisterTypes`: v0.5.0's docs said v5.6.0, which has neither
+(corrected after the tag, from pgx's changelog). Each refuses only apps whose generated code couldn't
 compile or would panic later.

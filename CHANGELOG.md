@@ -15,7 +15,7 @@ epistemer on 2026-11-24.
   `UnmarshalText`, which refuse a value the enum doesn't have.
 - **A fourth generator, `pgx`** (A5.3, F15): `zz_<package>_pgx.go` with
   `RegisterTypes(ctx, conn)`, registering every enum and its array, for
-  `pgxpool.Config.AfterConnect`. Needs pgx v5.6.0 or later.
+  `pgxpool.Config.AfterConnect`. Needs pgx v5.7.0 or later.
 - **`option.Static(value, text)`** (A5.4, F8), for options whose label is
   data; its label's `K()` is `""`.
 - **Enum values' English text is the value made readable** (A5.5, F19):

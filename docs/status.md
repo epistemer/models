@@ -54,6 +54,11 @@ matches are documented (it silently ignores `pg_catalog.timestamptz` and
   with overrides, including `date` and `timestamptz` to `time.Time`, which
   stay pgtype otherwise. Then add `pgx` to models' generators.
 
+**After the tag:** v0.5.0's docs gave pgx v5.6.0 as `pgx`'s minimum;
+pgx's changelog puts `LoadTypes` in v5.7.0, and v5.6.0 lacks it. Docs on
+`main`, README, CHANGELOG and the skill now say v5.7.0, recorded in A5;
+the tag's code is unaffected.
+
 **Waiting on you:** nothing.
 
 ## 2026-11-22 — A4: column sets for views (v0.4.0)
