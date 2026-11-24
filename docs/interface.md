@@ -1,22 +1,24 @@
 # models — Developer Interface (v1, locked)
 
 > Status: **locked by epistemer on 2026-11-14** (roadmap M1.5). Any change
-> needs an amendment, recorded in §11 (A1, A2, A3). This document covers what
+> needs an amendment, recorded in §11 (A1–A5). This document covers what
 > an app writes and what it gets back; why it is so is in
 > [ADR 0001](adr/0001-models-on-sqlc.md), [ADR 0002](adr/0002-spike-s1-zp-labels.md)
-> and, for `views`, [ADR 0005](adr/0005-view-listings.md).
+> and, for `views`, [ADR 0005](adr/0005-view-listings.md),
+> [ADR 0007](adr/0007-column-sets-for-views.md) and
+> [ADR 0008](adr/0008-column-sets-read-any-field.md).
 
 ## 0. Decisions
 
 | # | Decision | Choice |
 |---|----------|--------|
-| D1 | What it is | Three trivial generators (genx) over sqlc's codegen request, and two runtime packages: `listing`, for the code `views` generates (A2), and `option` (A3). No program |
+| D1 | What it is | Four trivial generators (genx) over sqlc's codegen request, and three runtime packages: `listing`, for the code `views` generates (A2), `option` (A3) and `column` (A4). No program |
 | D2 | App's choices | genx parameters (genx amendment A4): `dir`, `package`, `table_prefix` (§3) |
-| D3 | Generators | `labels` writes a `labels/v1` file; `enums` writes `Label()`, `Value()` and `All<Type>Options()` for every enum type (A3); `views` writes a `List<Type>` method for every relation whose name ends in `_view` (§4) |
+| D3 | Generators | `labels` writes a `labels/v1` file; `enums` writes `Label()`, `Value()` and `All<Type>Options()` for every enum type (A3); `views` writes a `List<Type>` method and a column set for every relation whose name ends in `_view` (§4); `pgx` writes `RegisterTypes` (A5) |
 | D4 | Keys | zp's: `enum.<enum>.<value>`, `table.<table>`, `table.<table>.<T>_<C>` (§5.2) |
 | D5 | Paths | The names in SQL: `enum.<enum>.<value>`, `table.<table>`, `table.<table>.<column>` (§5.2) |
 | D6 | Variables | `L10n<Const>` for an enum value (`<Const>` is sqlc's constant), `L10n<T>` and `L10n<T>_<C>` for tables and columns (§5.2) |
-| D7 | English text | The SQL comment, else the name made readable; an enum value is itself (§5.3) |
+| D7 | English text | The SQL comment, else the name made readable; an enum value made readable (A5, §5.3) |
 | D8 | Scope | The request's default schema, one request per app, sqlc's default naming options (§7) |
 | D9 | Versions | genx `v0.2.0` or later, i18n `v0.2.0` or later, sqlc requests of `v1.29.0`'s shape (`sqlc.request/v1`) |
 | D10 | Module path | `github.com/epistemer/models`, package `models`, with only the metafile, its templates and a `doc.go`; packages `listing` (§4.4) and `option` (§4.5) |
@@ -73,7 +75,7 @@ producers:
         domain: sqlc.request/v1
 use:
   - github.com/epistemer/models:
-      generators: [labels, enums, views]
+      generators: [labels, enums, views, pgx]
       params:
         table_prefix: app_
   - github.com/epistemer/i18n: [labels]
@@ -83,7 +85,8 @@ The list form, `- github.com/epistemer/models: [labels, enums]`, uses every
 default. `enums` needs `labels` and i18n's `labels`: its methods return the
 variables those two declare. `views` needs them too, for its column sets'
 labels (A4), and `enums` when a view has an enum column, for its options;
-it needs sqlc's `sql_package: "pgx/v5"` (§7). `labels` works alone.
+it needs sqlc's `sql_package: "pgx/v5"` (§7). `pgx` needs pgx/v5 too,
+v5.6.0 or later, and nothing else of models'. `labels` works alone.
 
 **A blank import**, so the module stays required and genx can find the
 metafile (genx ADR 0003). The file goes in any package of the app and
@@ -140,17 +143,19 @@ Declared in models' metafile and set on its `use` entry (genx A4).
 | `labels` | the one `sqlc.request/v1` file | `<dir>/zz_<package>.labels.json`, a `labels/v1` file |
 | `enums` | the one `sqlc.request/v1` file | `<dir>/zz_<package>_enums.go` |
 | `views` | the one `sqlc.request/v1` file | `<dir>/zz_<package>_views.go` |
+| `pgx` | the one `sqlc.request/v1` file | `<dir>/zz_<package>_pgx.go` (A5) |
 
 With no request, neither writes anything. When the default schema gives no
 label at all (no table or view, and no enum value), `labels` writes
-nothing; with no enum type, `enums` writes nothing; with no relation whose name
+nothing; with no enum type, `enums` and `pgx` write nothing; with no relation whose name
 ends in `_view`, `views` writes nothing. Nothing empty is ever
 written, because i18n would turn an empty labels file into Go with an
 unused import. An enum with no values still gets its `Label()`, which
 always returns nil.
 
-All three make every check of §6 that isn't marked as `views`' own, so
-`enums` or `views` run without `labels` refuses what `labels` would.
+All four make every check of §6 that isn't marked as `views`' or `pgx`'
+own, so `enums`, `views` or `pgx` run without `labels` refuses what
+`labels` would.
 
 i18n's `labels` then writes `<dir>/zz_<package>_i18n.go`, which declares
 every label's variable and `L10n(path)`.
@@ -186,6 +191,8 @@ order. genx writes object keys sorted, as above, and indents its own way.
 package models
 
 import (
+	"fmt"
+
 	"github.com/epistemer/i18n"
 	"github.com/epistemer/models/option"
 )
@@ -206,6 +213,25 @@ func (t OrderStatus) Label() i18n.TKer {
 // Value returns t as a string, for option.SelectOption.
 func (t OrderStatus) Value() string { return string(t) }
 
+// MarshalText returns t's value, or an error when t isn't a value of
+// OrderStatus.
+func (t OrderStatus) MarshalText() ([]byte, error) {
+	if t.Label() == nil {
+		return nil, fmt.Errorf("models: %q is not a value of OrderStatus", string(t))
+	}
+	return []byte(t), nil
+}
+
+// UnmarshalText sets t to text, or returns an error when text isn't a
+// value of OrderStatus.
+func (t *OrderStatus) UnmarshalText(text []byte) error {
+	if OrderStatus(text).Label() == nil {
+		return fmt.Errorf("models: %q is not a value of OrderStatus", string(text))
+	}
+	*t = OrderStatus(text)
+	return nil
+}
+
 // AllOrderStatusOptions returns every value of OrderStatus, in the
 // schema's order, as select options.
 func AllOrderStatusOptions() []option.SelectOption {
@@ -218,9 +244,19 @@ func AllOrderStatusOptions() []option.SelectOption {
 ```
 
 - For each enum type, in the order of §4.1, on the type sqlc declares and
-  with sqlc's constants: `Label()`, `Value()` (A3) and
-  `All<Type>Options()` (A3). Nothing else is declared. Every enum value is
-  an `option.SelectOption` (§4.5).
+  with sqlc's constants: `Label()`, `Value()` (A3),
+  `MarshalText()`, `UnmarshalText()` (A5) and `All<Type>Options()` (A3).
+  Nothing else is declared. Every enum value is an `option.SelectOption`
+  (§4.5).
+- The text methods (A5) take exactly the enum's values in SQL, `""` only
+  when the enum has it, and refuse any other text, case included, with
+  `models: "bogus" is not a value of OrderStatus` and no sentinel.
+  handlers' `ParamText` turns that into `ErrBadParam`, a 400, so a bad path
+  parameter never reaches PostgreSQL. handlers' URL builders panic on a
+  value that isn't the enum's (`handlers.Text`), a programming error.
+  `encoding/json` uses the methods too, so marshalling a sqlc row whose
+  nullable enum is null (`NullOrderStatus{}`, value `""`) fails unless
+  `""` is a value. pgx doesn't use them.
 - `All<Type>Options()` returns a new slice on every call; an enum with no
   values returns an empty one.
 - `Null<Type>` gets no method: call `n.<Type>.Label()` when `n.Valid`.
@@ -297,7 +333,7 @@ var OrderSummaryViewColumns = struct {
 }{
 	ID: column.Column[OrderSummaryView]{
 		Name: "id", Label: L10nOrderSummaryView_Id, Kind: column.Integer,
-		Get:  func(r OrderSummaryView) column.Value { return column.Value{Int: r.ID} },
+		Get:  column.Field(column.Integer, func(r OrderSummaryView) any { return r.ID }),
 	},
 	Status: column.Column[OrderSummaryView]{
 		Name: "status", Label: L10nOrderSummaryView_Status, Kind: column.Enum,
@@ -306,17 +342,12 @@ var OrderSummaryViewColumns = struct {
 	},
 	Note: column.Column[OrderSummaryView]{
 		Name: "note", Label: L10nOrderSummaryView_Note, Kind: column.Text,
-		Get: func(r OrderSummaryView) column.Value {
-			if !r.Note.Valid {
-				return column.Value{Null: true}
-			}
-			return column.Value{Text: r.Note.String}
-		},
+		Get:  column.Field(column.Text, func(r OrderSummaryView) any { return r.Note }),
 	},
 }
 ```
 
-- The kind comes from the column's SQL type as sqlc's pgx/v5 types it:
+- The kind comes from the column's SQL type:
 
   | SQL type | Kind | The value |
   |---|---|---|
@@ -330,11 +361,19 @@ var OrderSummaryViewColumns = struct {
   | `timestamp`, `timestamptz` | Time | `Time`; infinite, as for `date` |
   | an enum of the default schema | Enum | `Enum`, the value; `Options` is `All<Type>Options()` |
 
-- A null is `Value{Null: true}`, unwrapped from pgtype's `Valid` or
-  sqlc's `Null<Type>`.
+- Every getter but an enum's is `column.Field` (§4.6, A5), which reads
+  whatever Go type sqlc gives the field: pgtype's with sqlc's defaults,
+  `*T` with `emit_pointers_for_null_types: true`, or an override's type
+  (`decimal.Decimal`, `time.Time`, `uuid.UUID`, an app's
+  `type ID int64`), each with a pointer when nullable. One views file
+  serves every configuration, since sqlc's request carries none of its Go
+  options. An enum column's getter reads `r.<Field>` or, when nullable,
+  sqlc's `Null<Type>` (sqlc keeps it with pointers too).
+- A null is `Value{Null: true}`: a nil pointer, pgtype's `Valid` false,
+  or sqlc's `Null<Type>`.
 - An array, or any other type (json, jsonb, bytea, interval, …), is left
-  out, and the set's comment names it. It stays in the row and the
-  listing.
+  out, and the set's comment names it, with or without an override. It
+  stays in the row and the listing.
 - `Label` is the column's variable from the labels file (§5), so the set
   needs `labels` and i18n's `labels`; an enum column's `Options` needs
   `enums`.
@@ -437,10 +476,17 @@ type SelectOption interface {
 	Value() string
 	Label() i18n.TKer
 }
+
+
+// Static returns an option whose label is text from data, such as an
+// event's name: its Label renders text in every locale, and its K is ""
+// (A5).
+func Static(value, text string) SelectOption
 ```
 
 models owns this interface, and the form and table packages consume it,
-so models depends on neither (ADR 0006).
+so models depends on neither (ADR 0006). A data label has no key, so a
+`Static` option's `Label().K()` is `""`.
 
 ### 4.6 Package column
 
@@ -474,12 +520,87 @@ type Column[R any] struct {
 func UUID(b [16]byte) string     // canonical text, for generated getters
 func Numeric(digits string) Value // a numeric from its exact digits, for generated getters
 func Infinite(sign int8) Value    // an infinite date or time, for generated getters
+
+// Field returns a getter that reads a row's field as kind k, for
+// generated column sets (A5). It calls field once, on R's zero value, to
+// learn the field's type, and panics there if k can't read that type.
+func Field[R any](k Kind, field func(R) any) func(R) Value
 ```
+
+What `Field` reads, for the field's type (A5, [ADR 0008](adr/0008-column-sets-read-any-field.md)):
+
+| The field's type | Read as |
+|---|---|
+| a pointer | nil is `Null`; otherwise what it points to, by these rules |
+| a `driver.Valuer`: every pgtype type, `decimal.Decimal`, `uuid.UUID`, an app's own | its `Value()`: nil is `Null`; otherwise that value, by these rules |
+| `time.Time` | itself |
+| a string, `[]byte`, bool, integer or float type, named or not (`type EventID int64`) | its value |
+| `[16]byte`, named or not | a UUID, in canonical text |
+
+What each kind takes:
+
+| Kind | Takes |
+|---|---|
+| Text | a string, `[]byte`, a UUID |
+| Integer | an integer |
+| Number | a float or an integer; a string as a numeric's exact digits, as `Numeric` (`decimal.Decimal` and `pgtype.Numeric` both give one) |
+| Bool | a bool |
+| Date, Time | a `time.Time`; `"infinity"` or `"-infinity"` as `Infinite` |
+| Enum | nothing: generated enum getters read the field themselves |
+
+- A type `Field` can't read, or a kind that can't take it, panics when the
+  set is declared, which is when the models package is initialized: at
+  the app's start, or in any test that imports it. The message names the
+  kind and the type, `column: number can't read ids.Money`, and the stack
+  names the set's line, which names the column.
+- A `driver.Valuer` whose value its kind can't take, or whose `Value`
+  fails, panics on that row, naming both types. pgtype's types,
+  `decimal.Decimal` and `uuid.UUID` never do.
 
 A column holds what the schema knows, and nothing a page decides: whether
 it is searched, sorted or filtered is the table package's (ADR 0007, ui's
 S22). A column can be built by hand, for a test or for rows that don't come
 from sqlc.
+
+### 4.7 The pgx file
+
+`pgx` (A5) writes `<dir>/zz_<package>_pgx.go` when the default schema has
+an enum:
+
+```go
+// Code generated from sqlc's request by github.com/epistemer/models. DO NOT EDIT.
+
+package models
+
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5"
+)
+
+// RegisterTypes registers every enum of the schema, and its array, with
+// conn's type map, so pgx can encode and scan []OrderStatus. For
+// pgxpool.Config.AfterConnect.
+func RegisterTypes(ctx context.Context, conn *pgx.Conn) error {
+	types, err := conn.LoadTypes(ctx, []string{
+		"public.order_status", "public._order_status",
+		"public.payment_method", "public._payment_method",
+	})
+	if err != nil {
+		return err
+	}
+	conn.TypeMap().RegisterTypes(types)
+	return nil
+}
+```
+
+- Names are qualified with the request's default schema, in §4.1's order,
+  each enum followed by its array, which PostgreSQL names `_` plus the
+  enum's name. pgx matches names as written, so none is quoted.
+- An app wires it as `cfg.AfterConnect = models.RegisterTypes` on its
+  `pgxpool.Config`. It needs pgx v5.6.0 or later, which added `LoadTypes`.
+- `pgx` keeps `enums` free of the driver, so `labels` and `enums` still
+  work on any `sql_package`.
 
 ## 5. Labels
 
@@ -490,6 +611,7 @@ from sqlc.
 | `strip(s)` | Removes `table_prefix` from the front of `s`, if `s` starts with it | `app_order_line` → `order_line` |
 | `zpPascal(s)` | Splits `s` on `_`, drops empty parts, upper-cases the first character of each part if it is an ASCII letter, and joins them | `order_line` → `OrderLine`, `user_id` → `UserId`, `2fa` → `2fa` |
 | `readable(s)` | The same split, joined with spaces | `order_line` → `Order Line` |
+| `readableValue(v)` | For an enum value (A5): split at `.`, `_`, `-` and where lower case turns to upper, as handlers' §13.3; each word's first ASCII letter upper-cased; joined with spaces; `v` itself when no word is left | `in_review` → `In Review`, `userID` → `User ID`, `!!` → `!!` |
 | `replace(v)` | sqlc's `EnumReplace`: `-`, `/`, `:` and `_` become `_`; other ASCII letters and digits stay; everything else goes | `cash:on:delivery` → `cash_on_delivery`, `café` → `caf` |
 | `structName(s)` | sqlc's `StructName` with `initialisms: [id]`, for an ASCII `s`: every character that isn't an ASCII letter or digit becomes `_`; split on `_`; a part equal to `id` becomes `ID`, any other gets its first character upper-cased if it is a letter; join; prefix `_` if the result starts with a digit | `id_kind` → `IDKind`, `2fa_method` → `_2faMethod` |
 
@@ -529,8 +651,15 @@ fixture ([testdata](../testdata/README.md)) covers every rule.
 
 | Label | Text |
 |-------|------|
-| Enum value | The value itself, even when empty |
+| Enum value | `readableValue(v)` (A5): `v` split at `.`, `_` and `-`, and where lower case turns to upper (a run of capitals stays one word: a capital followed by a lower-case letter starts a new word), each word's first letter upper-cased if it is an ASCII letter, joined with spaces; the value itself when that leaves no word, so an empty value keeps an empty text |
 | Table, view, column | Its SQL comment with white space trimmed from both ends; if that leaves nothing, `readable(strip(name))`. White space is `\t`, `\n`, `\v`, `\f`, `\r`, U+0085 and the Unicode categories `Zs`, `Zl` and `Zp`, as the regular expression `[\t\n\v\f\r\x{85}\p{Z}]` |
+
+Examples of an enum value's text: `in_review` → `In Review`,
+`credit-card` → `Credit Card`, `bank/transfer` → `Bank/transfer`,
+`cash:on:delivery` → `Cash:on:delivery`, `userID` → `User ID`,
+`u2f` → `U2f`, `level_3` → `Level 3`, `café` → `Café`, `!!` → `!!`,
+`''` → `''`. It is handlers' §13.3 rule, but for the first letter of a
+word outside ASCII, which stays as it is.
 
 The text is the default in the source language. People change it, and
 translate it, in the running app (i18n); models never writes translations.
@@ -569,6 +698,13 @@ ends in `_view`:
 | A query whose sqlc constant (its name with the first letter lower-cased) hides a name the views file uses: `listing`, `column` (A4), `context`, `append`, `len`, `nil`, `int64`, `string` or `error` | `models: query "Listing" gives sqlc the constant "listing", which hides a name the views file uses` |
 | A view's column set `<Type>Columns` (A4) is already a query's, a relation's or an enum's Go name | `models: view "order_view": its column set "OrderViewColumns" is already a query's, a relation's or an enum's Go name` |
 
+Made by `pgx` only (A5), and only when the default schema has an enum:
+
+| Case | Example message |
+|------|-----------------|
+| An enum whose Go type is `RegisterTypes` | `models: enum "register_types" gives sqlc the Go name "RegisterTypes", which pgx declares` |
+| A query whose sqlc constant hides a name the pgx file uses: `context`, `pgx`, `string`, `error` or `nil` | `models: query "Pgx" gives sqlc the constant "pgx", which hides a name the pgx file uses` |
+
 Made by every generator, like the shared cases above it (A3):
 
 | Case | Example message |
@@ -602,7 +738,12 @@ a refusal, or a method nothing calls; never in a wrong key.
 | A method `Value` on an enum type, or a package-level `All<Type>Options`, of the app's own (A3); a table whose sqlc type, made singular, is `All<Type>Options` | `Value redeclared` or `All<Type>Options redeclared`. An enum type can't also be a `driver.Valuer`, whose `Value` has another signature |
 | `emit_methods_with_db_argument: true` | `Queries` has no `db`: `zz_<package>_views.go` doesn't compile |
 | A table whose sqlc type is `Listings` (sqlc's singular of its name, which models can't compute) | `Listings redeclared` |
-| `emit_pointers_for_null_types: true`, or a column `overrides` entry, on a `_view` relation (A4) | the column set's getters read pgtype's or sqlc's null types: `zz_<package>_views.go` doesn't compile (`has no field`) |
+| An `overrides` entry on a `_view` relation's enum column, or on an enum's type (A5) | the field isn't `<Type>` or `Null<Type>`: the enum column's getter in `zz_<package>_views.go` doesn't compile |
+| An override over a kind-taking SQL type whose Go type `Field` can't read (a struct that isn't a `driver.Valuer`) (A5) | `column.Field` panics when the models package is initialized, naming the kind and the type |
+| A method `MarshalText` or `UnmarshalText` on an enum type, of the app's own (A5) | `MarshalText redeclared` |
+| An enum whose array PostgreSQL didn't name `_<enum>` (a name of 63 bytes, or a clash) (A5) | `RegisterTypes` fails on connect, from pgx's `LoadTypes` |
+| A function `RegisterTypes` of the app's own in the package, or a table whose sqlc type, made singular, is `RegisterTypes` (A5) | `RegisterTypes redeclared` |
+| `pgx` with pgx older than v5.6.0 (A5) | `conn.LoadTypes undefined` |
 | `views` without `labels` and i18n's `labels`, or without `enums` for a view with an enum column (A4) | `undefined: L10n…` or `undefined: All<Type>Options` |
 
 ## 8. Testing an app
@@ -680,13 +821,14 @@ set the `views` generator writes beside each `List<Type>`. The design is
 declarations: a minor version, `v0.4.0`. §4.3 and §4.6 state it.
 
 
-### A5. Confab iteration 1 (proposed 2026-11-24, for v0.5.0)
+### A5. Confab iteration 1 (2026-11-24, for v0.5.0)
 
-> **Proposed, not locked.** Waiting on epistemer's lock. From Confab's
-> iteration 1 (findings F5, F28, F15, F8, F19) and epistemer's answers of
-> 2026-11-24 on the board item "models: API questions from Confab
-> iteration 1". The board's M1–M5 are A5.1–A5.5 here, since M1–M6 name
-> this repository's milestones. Nothing below is built yet.
+> **Locked by epistemer on 2026-11-24, with every default** (A5.1a–c,
+> A5.3a–b). From Confab's iteration 1 (findings F5, F28, F15, F8, F19)
+> and epistemer's answers of 2026-11-24 on the board item "models: API
+> questions from Confab iteration 1". The board's M1–M5 are A5.1–A5.5
+> here, since M1–M6 name this repository's milestones. §0, §2, §4, §5.3,
+> §6 and §7 state it; the text below is the record of what was locked.
 
 New declarations and a changed English text: a minor version, `v0.5.0`,
 under v0's rules. §10 calls a change to the English text's rule a new

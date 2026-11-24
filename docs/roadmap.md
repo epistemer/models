@@ -45,6 +45,7 @@ sqlc generate  →  models/codegen_request.json (sqlc.request/v1, foreign)
 | [M4](#m4--v010) | Docs, the skill, `v0.1.0` | M3 |
 | [M5](#m5--listings-of-views-v020) | Listings of views: a generator and a runtime package, `v0.2.0` | M4 |
 | [M6](#m6--interfaces-for-ui-packages-v030) | `option.SelectOption`, `listing.Source` and `listing.Labeler`, `v0.3.0` | M5 |
+| [M7](#m7--confab-iteration-1-v050) | Confab iteration 1's findings: amendment A5, `v0.5.0` | M6 |
 
 ## Definition of done (every work item)
 
@@ -126,6 +127,21 @@ other way ([ADR 0006](adr/0006-interfaces-for-ui-packages.md)).
 | ☑ | M6.2 | Package `option`; `Value()` and `All<Type>Options()` in the enums file, with A3's refusal | S | Goldens; every enum value is an `option.SelectOption` (a compile-time check in `gentest`); the refusal tested |
 | ☑ | M6.3 | `listing.Source` and `listing.Labeler`; `List<Type>` takes a `Source` | S | Unit tests; the PostgreSQL test passes a `Query` and a `Source` of its own |
 | ☑ | M6.4 | The example, docs, the skill, a cross-model review, CHANGELOG and tag `v0.3.0` | S | Tag pushed |
+
+## M7 — Confab iteration 1 (v0.5.0)
+
+Confab's findings F2, F5, F8, F15, F19 and F28, as epistemer answered them
+on 2026-11-24. Amendment A5, locked the same day with every default;
+A5.1's design is [ADR 0008](adr/0008-column-sets-read-any-field.md).
+
+| ✓ | ID | Item | Size | Done when |
+|---|----|------|------|-----------|
+| ☑ | M7.0 | F2: `table_prefix`'s trade-off documented where it's introduced (interface §3, README) | S | Merged (#15) |
+| ☑ | M7.1 | A5 drafted, locked by epistemer, and stated in interface.md and ADR 0008 | S | Locked |
+| ☐ | M7.2 | `column.Field` (A5.1) and `option.Static` (A5.4) | S | Unit tests of every row of A5.1's tables, the init-time panic and a row-time one |
+| ☐ | M7.3 | The enums file's text methods (A5.2), enum values' English text (A5.5), the `pgx` generator (A5.3) | M | Goldens rendered twice; the conformance check passes; each new refusal tested; `RegisterTypes` and the text methods tested against PostgreSQL |
+| ☐ | M7.4 | Column sets through `column.Field`; `gentest` runs the shop's listing and column sets with sqlc's defaults and with pointers plus overrides | M | The PostgreSQL test passes on both configurations |
+| ☐ | M7.5 | The example, docs, the skill, a cross-model review, CHANGELOG and tag `v0.5.0` | S | Tag pushed |
 
 ## After v0.3.0 (backlog)
 

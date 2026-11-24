@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | Proposed, waiting on epistemer's lock of amendment A5 |
+| Status | Accepted by epistemer on 2026-11-24, with amendment A5's defaults |
 | Date | 2026-11-24 |
 | Roadmap item | M7.1 (A5.1); Confab iteration 1, finding F5 |
 | Deciders | epistemer decided the goal on 2026-11-24 (board item "models: API questions from Confab iteration 1", M1) and decides this text; Claude proposes it |
@@ -65,7 +65,7 @@ sqlc matched `db_type` as `pg_catalog.numeric`, `pg_catalog.interval`,
 
 ## Decision
 
-Option 1, proposed. `column.Field[R any](k Kind, field func(R) any)
+Option 1. `column.Field[R any](k Kind, field func(R) any)
 func(R) Value`. It calls `field` on R's zero value when the set is
 declared: the interface it returns holds the field's static type even
 when the field is a nil pointer. Field resolves a reader for that type
