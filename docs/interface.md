@@ -679,3 +679,221 @@ set the `views` generator writes beside each `List<Type>`. The design is
 [ADR 0007](adr/0007-column-sets-for-views.md). A new package and new
 declarations: a minor version, `v0.4.0`. §4.3 and §4.6 state it.
 
+
+### A5. Confab iteration 1 (proposed 2026-11-24, for v0.5.0)
+
+> **Proposed, not locked.** Waiting on epistemer's lock. From Confab's
+> iteration 1 (findings F5, F28, F15, F8, F19) and epistemer's answers of
+> 2026-11-24 on the board item "models: API questions from Confab
+> iteration 1". The board's M1–M5 are A5.1–A5.5 here, since M1–M6 name
+> this repository's milestones. Nothing below is built yet.
+
+New declarations and a changed English text: a minor version, `v0.5.0`,
+under v0's rules. §10 calls a change to the English text's rule a new
+major version; that line is for v1, and A5.5 ships as a minor by
+epistemer's decision.
+
+#### A5.1 Column sets read any field type sqlc generates (M1, F5)
+
+The design is [ADR 0008](adr/0008-column-sets-read-any-field.md). sqlc's
+request carries none of its Go options, so one views file must compile
+whether or not the app sets `emit_pointers_for_null_types` or
+`overrides`. Every getter but an enum's hands its field to a new function
+of package `column`:
+
+```go
+// Field returns a getter that reads a row's field as kind k, for
+// generated column sets (A5). It calls field once, on R's zero value, to
+// learn the field's type, and panics there if k can't read that type.
+func Field[R any](k Kind, field func(R) any) func(R) Value
+```
+
+```go
+Note: column.Column[OrderSummaryView]{
+	Name: "note", Label: L10nOrderSummaryView_Note, Kind: column.Text,
+	Get:  column.Field(column.Text, func(r OrderSummaryView) any { return r.Note }),
+},
+```
+
+What `Field` reads, for the field's type:
+
+| The field's type | Read as |
+|---|---|
+| a pointer | nil is `Null`; otherwise what it points to, by these rules |
+| a `driver.Valuer`: every pgtype type, `decimal.Decimal`, `uuid.UUID`, an app's own | its `Value()`: nil is `Null`; otherwise that value, by these rules |
+| `time.Time` | itself |
+| a string, `[]byte`, bool, integer or float type, named or not (`type EventID int64`) | its value |
+| `[16]byte`, named or not | a UUID, in canonical text |
+
+What each kind takes:
+
+| Kind | Takes |
+|---|---|
+| Text | a string, `[]byte`, a UUID |
+| Integer | an integer |
+| Number | a float or an integer; a string as a numeric's exact digits, as `column.Numeric` (`decimal.Decimal` and `pgtype.Numeric` both give one) |
+| Bool | a bool |
+| Date, Time | a `time.Time`; `"infinity"` or `"-infinity"` as `column.Infinite` |
+| Enum | nothing: enum getters stay A4's, since sqlc types a nullable enum `Null<Type>` with or without pointers |
+
+- A type `Field` can't read, or a kind that can't take it, panics when the
+  set is declared, which is when the models package is initialized: at
+  the app's start, or in any test that imports it. The message names the
+  kind and the type, `column: number can't read ids.Money`, and the stack
+  names the set's line, which names the column.
+- A `driver.Valuer` whose value its kind can't take panics on that row,
+  naming both types. pgtype's types, `decimal.Decimal` and `uuid.UUID`
+  never do.
+- Tested in `gentest`, against PostgreSQL, with sqlc's defaults and with
+  `emit_pointers_for_null_types: true` plus these overrides, each with
+  `pointer: true` for its nullable entry: `numeric` to `decimal.Decimal`;
+  `date`, `timestamp` and `timestamptz` to `time.Time`; `uuid` to
+  `uuid.UUID`; `interval` to `time.Duration`; and a column override to an
+  app's `type … int64`. With pointers but without the `date`, `timestamp`
+  and `timestamptz` overrides, sqlc keeps pgtype for them, which `Field`
+  reads too. sqlc v1.29.0 matches `db_type` spelled `pg_catalog.numeric`,
+  `pg_catalog.interval`, `pg_catalog.timestamp`, `timestamptz`, `date` and
+  `uuid`, and silently ignores `pg_catalog.timestamptz` and `timestamp`;
+  the docs give the spellings the test uses.
+- `interval` takes no kind, with or without an override: the set leaves it
+  out and names it, as for `jsonb`.
+- §7's row on `emit_pointers_for_null_types` and column overrides goes. A
+  new row: an `overrides` entry on an enum column, or on an enum's type,
+  gives a field that isn't `<Type>` or `Null<Type>`, so the enum getter
+  doesn't compile.
+- `column.UUID`, `column.Numeric` and `column.Infinite` stay.
+
+**Sub-questions, each with a default:**
+
+- **A5.1a.** Getters resolved at run time, as above, *default*; or genx
+  parameters mirroring sqlc's options (`emit_pointers_for_null_types`,
+  the overrides) for compiled getters. The default needs nothing written
+  twice, and a parameter couldn't say how to read an app's own type. It
+  moves the failure from compile time to the package's initialization.
+- **A5.1b.** The name `column.Field`, *default*.
+- **A5.1c.** `interval` stays out of every kind, *default*. The
+  alternative is a `column.Duration` kind with a `Value.Dur
+  time.Duration` field. ui's tables switch on `Kind`, so that would also
+  need a ui amendment to render one.
+
+#### A5.2 Text methods on enums (M2, F28)
+
+The enums file declares two more methods per enum type:
+
+```go
+// MarshalText returns t's value, or an error when t isn't a value of
+// OrderStatus.
+func (t OrderStatus) MarshalText() ([]byte, error)
+
+// UnmarshalText sets t to text, or returns an error when text isn't a
+// value of OrderStatus.
+func (t *OrderStatus) UnmarshalText(text []byte) error
+```
+
+- The error reads `models: "bogus" is not a value of OrderStatus`, with no
+  sentinel. handlers' `ParamText` turns it into `ErrBadParam` (a 400), so
+  `/events/3/status/bogus` never reaches PostgreSQL.
+- A value is one of the enum's values in SQL, `""` included only when the
+  enum has it. No other text passes, case included.
+- handlers' URL builders call `MarshalText` through `handlers.Text`, which
+  panics on an error. A builder given a value that isn't the enum's then
+  panics, which is a programming error.
+- `encoding/json` uses them too, so marshalling a sqlc row whose nullable
+  enum is null (`NullOrderStatus{}`, whose value is `""`) fails, unless
+  `""` is a value. Apps send their own API types (oapi-codegen), not sqlc
+  rows. pgx doesn't use text methods.
+- A new §7 row: an app's own `MarshalText` or `UnmarshalText` on an enum
+  type gives `redeclared`.
+
+#### A5.3 Registering enums with pgx (M3, F15)
+
+A fourth generator, **`pgx`**, writes `<dir>/zz_<package>_pgx.go` when the
+default schema has an enum:
+
+```go
+// Code generated from sqlc's request by github.com/epistemer/models. DO NOT EDIT.
+
+package models
+
+import (
+	"context"
+
+	"github.com/jackc/pgx/v5"
+)
+
+// RegisterTypes registers every enum of the schema, and its array, with
+// conn's type map, so pgx can encode and scan []OrderStatus. For
+// pgxpool.Config.AfterConnect.
+func RegisterTypes(ctx context.Context, conn *pgx.Conn) error {
+	types, err := conn.LoadTypes(ctx, []string{
+		"public.order_status", "public._order_status",
+		"public.payment_method", "public._payment_method",
+	})
+	if err != nil {
+		return err
+	}
+	conn.TypeMap().RegisterTypes(types)
+	return nil
+}
+```
+
+- Names are schema-qualified with the request's default schema, in §4.1's
+  order, each enum followed by its array, which PostgreSQL names `_` plus
+  the enum's name. pgx matches names as written, so no quoting is needed.
+- It needs pgx v5.6.0 or later, which added `LoadTypes`.
+- An app wires it as `cfg.AfterConnect = models.RegisterTypes`.
+- New refusals, made by `pgx` only: an enum whose Go type is
+  `RegisterTypes`; a query whose constant hides a name the file uses
+  (`context`, `pgx`, `string`, `error`, `nil`).
+- A new §7 row: the array's name differs from `_<enum>` when PostgreSQL
+  shortened or renamed it (an enum name of 63 bytes, or a clash). Then
+  `RegisterTypes` fails on connect, naming the type.
+- **A5.3a.** A new generator, *default*, so that `enums` keeps working
+  on any `sql_package`; or `RegisterTypes` in the enums file, which then
+  needs pgx/v5.
+- **A5.3b.** The generator's name `pgx`, the file `zz_<package>_pgx.go`
+  and the function `RegisterTypes(ctx context.Context, conn *pgx.Conn)
+  error`, *default*.
+
+#### A5.4 Options whose label is data (M4, F8)
+
+Package `option` gains one function. `SelectOption` stays as it is.
+
+```go
+// Static returns an option whose label is text from data, such as an
+// event's name: its Label renders text in every locale, and its K is "".
+func Static(value, text string) SelectOption
+```
+
+- A data label has no key, so `Label().K()` is `""`. No ui package reads
+  `K()` of an option's label.
+
+#### A5.5 An enum value's English text is the value made readable (M5, F19)
+
+D7 and §5.3 change: an enum value's text is `readable(v)`, the value
+made readable as handlers' interface §13.3 makes route keys readable. The
+value is split at `.`, `_` and `-`, and where lower case turns to upper
+(a run of capitals stays one word). Each word's first letter is
+upper-cased if it is an ASCII letter, and the words are joined with
+spaces. When that leaves no word, the text is the value itself, so an
+empty value keeps an empty text. Keys, paths and variables don't change.
+
+| Value | Text |
+|---|---|
+| `in_review` | `In Review` |
+| `credit-card` | `Credit Card` |
+| `bank/transfer` | `Bank/transfer` |
+| `cash:on:delivery` | `Cash:on:delivery` |
+| `inReview`, `userID` | `In Review`, `User ID` |
+| `u2f`, `level_3` | `U2f`, `Level 3` |
+| `café` | `Café` |
+| `!!` | `!!` |
+| `''` | `''` (empty) |
+
+- The rule for tables, views and columns (`readable` of §5.1, split at
+  `_` only) stays.
+- i18n shows an unedited value's new text at once. An edited one keeps
+  its edit, which records the old text as the one it was based on (i18n
+  §8.1).
+- It changes neozp's labels convention, which said an enum value is
+  itself (decisions.md D7, 2026-11-24).
