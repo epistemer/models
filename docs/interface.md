@@ -121,6 +121,17 @@ Declared in models' metafile and set on its `use` entry (genx A4).
 - Both are checked on every run, with or without a request.
 - **`table_prefix` is part of every column key.** Changing it after
   translations exist orphans them, as renaming a column would.
+- **`table_prefix` reaches models' names only, not sqlc's.** sqlc keeps
+  the prefix in every Go name: with tables `app_order` and
+  `app_order_view` and `table_prefix: app_`, the labels' variables read
+  `L10nOrder_Total`, but sqlc's types are `AppOrder` and `AppOrderView`, so
+  the listing is `ListAppOrderView` and the column set
+  `AppOrderViewColumns` (§4.3). One relation then has two names in Go.
+  sqlc's own way out, a `rename` per relation, isn't followed by `enums`
+  or `views` (§7). So the trade-off is: a prefix keeps keys and labels
+  short while Go names keep it, or tables without a prefix give one name
+  everywhere (a table named after a reserved word, such as `user`, then
+  needs another name or quoting in every query).
 
 ## 4. Generators
 

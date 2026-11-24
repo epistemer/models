@@ -101,7 +101,11 @@ app implements to show the text of the id a link column is filtered by
 (rows carry their own text through the view's joins).
 
 `table_prefix` is removed from table and column names in variables,
-English text and column keys, so set it before translations exist. If
+English text and column keys, so set it before translations exist. sqlc
+keeps the prefix in its own Go names (`AppOrderView`, so
+`ListAppOrderView`), and models doesn't follow sqlc's `rename`: with a
+prefix, one relation has two names in Go. Tables without a prefix avoid
+that (interface §3). If
 sqlc's `out` isn't `models`, set `dir` (and `package`, if the directory's
 name isn't the package's).
 
