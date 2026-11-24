@@ -21,7 +21,7 @@
 | D7 | English text | The SQL comment, else the name made readable; an enum value made readable (A5, §5.3) |
 | D8 | Scope | The request's default schema, one request per app, sqlc's default naming options (§7) |
 | D9 | Versions | genx `v0.2.0` or later, i18n `v0.2.0` or later, sqlc requests of `v1.29.0`'s shape (`sqlc.request/v1`) |
-| D10 | Module path | `github.com/epistemer/models`, package `models`, with only the metafile, its templates and a `doc.go`; packages `listing` (§4.4) and `option` (§4.5) |
+| D10 | Module path | `github.com/epistemer/models`, package `models`, with only the metafile, its templates and a `doc.go`; packages `listing` (§4.4), `option` (§4.5) and `column` (§4.6) |
 
 ## 1. Principles
 
@@ -85,8 +85,10 @@ The list form, `- github.com/epistemer/models: [labels, enums]`, uses every
 default. `enums` needs `labels` and i18n's `labels`: its methods return the
 variables those two declare. `views` needs them too, for its column sets'
 labels (A4), and `enums` when a view has an enum column, for its options;
-it needs sqlc's `sql_package: "pgx/v5"` (§7). `pgx` needs pgx/v5 too,
-v5.7.0 or later, and nothing else of models'. `labels` works alone.
+it needs sqlc's `sql_package: "pgx/v5"` (§7). `pgx` imports
+`github.com/jackc/pgx/v5`, so the app's module needs it at v5.7.0 or
+later; it reads no sqlc option and needs nothing else of models'.
+`labels` works alone.
 
 **A blank import**, so the module stays required and genx can find the
 metafile (genx ADR 0003). The file goes in any package of the app and
@@ -130,8 +132,8 @@ Declared in models' metafile and set on its `use` entry (genx A4).
   `L10nOrder_Total`, but sqlc's types are `AppOrder` and `AppOrderView`, so
   the listing is `ListAppOrderView` and the column set
   `AppOrderViewColumns` (§4.3). One relation then has two names in Go.
-  sqlc's own way out, a `rename` per relation, isn't followed by `enums`
-  or `views` (§7). So the trade-off is: a prefix keeps keys and labels
+  sqlc's own way out, a `rename` per relation, isn't followed by `views`
+  (§7). So the trade-off is: a prefix keeps keys and labels
   short while Go names keep it, or tables without a prefix give one name
   everywhere (a table named after a reserved word, such as `user`, then
   needs another name or quoting in every query).
@@ -153,9 +155,9 @@ written, because i18n would turn an empty labels file into Go with an
 unused import. An enum with no values still gets its `Label()`, which
 always returns nil.
 
-All four make every check of §6 that isn't marked as `views`' or `pgx`'
-own, so `enums`, `views` or `pgx` run without `labels` refuses what
-`labels` would.
+All four make every check of §6 that isn't marked as one generator's own
+(`enums`', `views`' or `pgx`'), so `enums`, `views` or `pgx` run without
+`labels` refuses what `labels` would.
 
 i18n's `labels` then writes `<dir>/zz_<package>_i18n.go`, which declares
 every label's variable and `L10n(path)`.
@@ -369,6 +371,12 @@ var OrderSummaryViewColumns = struct {
   serves every configuration, since sqlc's request carries none of its Go
   options. An enum column's getter reads `r.<Field>` or, when nullable,
   sqlc's `Null<Type>` (sqlc keeps it with pointers too).
+- sqlc v1.29.0 matches an override's `db_type` spelled `timestamptz`,
+  `pg_catalog.timestamp`, `date`, `uuid`, `pg_catalog.numeric` and
+  `pg_catalog.interval`. It silently ignores `pg_catalog.timestamptz` and
+  plain `timestamp`, and the field stays pgtype, which `Field` reads too.
+  With pointers on but no override, `date`, `timestamp`, `timestamptz`
+  and `uuid` stay pgtype.
 - A null is `Value{Null: true}`: a nil pointer, pgtype's `Valid` false,
   or sqlc's `Null<Type>`.
 - An array, or any other type (json, jsonb, bytea, interval, …), is left
@@ -554,8 +562,9 @@ What each kind takes:
   kind and the type, `column: number can't read ids.Money`, and the stack
   names the set's line, which names the column.
 - A `driver.Valuer` whose value its kind can't take, or whose `Value`
-  fails, panics on that row, naming both types. pgtype's types,
-  `decimal.Decimal` and `uuid.UUID` never do.
+  fails, panics on that row, naming both types. Under the kinds `views`
+  pairs them with (§4.3), pgtype's types, `decimal.Decimal` and
+  `uuid.UUID` never do; a set built by hand with a wrong kind can.
 
 A column holds what the schema knows, and nothing a page decides: whether
 it is searched, sorted or filtered is the table package's (ADR 0007, ui's
@@ -1018,7 +1027,7 @@ func Static(value, text string) SelectOption
 
 #### A5.5 An enum value's English text is the value made readable (M5, F19)
 
-D7 and §5.3 change: an enum value's text is `readable(v)`, the value
+D7 and §5.3 change: an enum value's text is `readableValue(v)`, the value
 made readable as handlers' interface §13.3 makes route keys readable. The
 value is split at `.`, `_` and `-`, and where lower case turns to upper
 (a run of capitals stays one word, and a capital followed by a lower-case

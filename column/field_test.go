@@ -547,3 +547,21 @@ func TestFieldReview(t *testing.T) {
 		t.Error("a pointer to a Valuer by value")
 	}
 }
+
+type myByte uint8
+
+// TestFieldReview2 covers review 0015's cases.
+func TestFieldReview2(t *testing.T) {
+	var b [16]myByte
+	b[0] = 0x12
+	text := column.Field(column.Text, func(r namedValuer) any { return r })
+	if v := text(namedValuer{b}); v.Text != "12000000-0000-0000-0000-000000000000" {
+		t.Errorf("[16]myByte from a Valuer: %+v", v)
+	}
+	if v := column.Field(column.Text, func(r [16]myByte) any { return r })(b); v.Text != "12000000-0000-0000-0000-000000000000" {
+		t.Errorf("a [16]myByte field: %+v", v)
+	}
+	if msg := catchPanic(func() { text(namedValuer{int32(5)}) }); msg != "column: text can't take a int32 from column_test.namedValuer" {
+		t.Errorf("an int32 to text names int32: %q", msg)
+	}
+}
