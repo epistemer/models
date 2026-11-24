@@ -59,6 +59,12 @@ pgx's changelog puts `LoadTypes` in v5.7.0, and v5.6.0 lacks it. Docs on
 `main`, README, CHANGELOG and the skill now say v5.7.0, recorded in A5;
 the tag's code is unaffected.
 
+**Second review** ([0015](reviews/0015-a5-docs-and-fixes.md)): Gemini 4
+Hydrogen (Medium), about 52k tokens, of what 0014 didn't see: F2, A5's
+interface and ADR text, and the fix commit. Ten of its 13 findings were
+valid: two edge bugs in `column.Field` and contract wording. **Released**
+as v0.5.1 (#17), checked through proxy.golang.org.
+
 **Waiting on you:** nothing.
 
 ## 2026-11-22 — A4: column sets for views (v0.4.0)
