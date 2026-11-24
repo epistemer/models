@@ -7,8 +7,7 @@ package models
 import (
 	"database/sql/driver"
 	"fmt"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 type OrderStatus string
@@ -75,13 +74,13 @@ type ShopOrder struct {
 	ID         int64
 	CustomerID int64
 	Status     OrderStatus
-	PlacedAt   pgtype.Timestamptz
+	PlacedAt   time.Time
 }
 
 // Orders
 type ShopOrderListView struct {
 	ID       int64
 	Status   OrderStatus
-	PlacedAt pgtype.Timestamptz
+	PlacedAt time.Time
 	Email    string
 }

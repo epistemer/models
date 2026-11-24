@@ -63,3 +63,4 @@ Table rows give the label's key, variable, path or text, as named.
 The refusals (another schema, two requests, duplicates, an empty name after
 the prefix, a Go name starting with `L10n`, an enum name outside ASCII) are
 tested on small requests written for each test (M2.1), not here.
+| A column of every kind, nullable and not, and three no kind takes | `shop_kinds_view`, with `timestamptz` and `interval` since A5 | `ShopKindsViewColumns`; `gentest/shopptr` reads it through sqlc's pointers and overrides |

@@ -2,19 +2,23 @@
 
 neozp's generators for database models that [sqlc](https://sqlc.dev)
 generates. sqlc writes the Go models; models adds a translatable label for
-every enum value, table, view and column, `Label()`, `Value()` and an
-option list for every enum type, and a paged, searchable listing method
-for every view whose name ends in `_view`. It is three trivial generators
-run by [genx](https://github.com/epistemer/genx), plus two small runtime
-packages, `listing` and `option`, whose interfaces neozp's table and form
-packages build on; [i18n](https://github.com/epistemer/i18n) turns the
+every enum value, table, view and column; `Label()`, `Value()`, text
+methods and an option list for every enum type; a paged, searchable
+listing method and a column set for every view whose name ends in `_view`;
+and `RegisterTypes` for pgx. It is four trivial generators run by
+[genx](https://github.com/epistemer/genx), plus three small runtime
+packages, `listing`, `option` and `column`, whose interfaces neozp's table
+and form packages build on; [i18n](https://github.com/epistemer/i18n) turns the
 labels into Go.
 
 ```go
-status.Label().T(ctx)                              // "paid", or its translation
+status.Label().T(ctx)                              // "Paid", or its translation
 models.L10nOrder_Status.T(ctx)                     // a column's label
 models.L10n("table.shop_order.status").T(ctx)      // the same, by SQL name
 models.AllOrderStatusOptions()                     // []option.SelectOption, for a select input
+option.Static(id, event.Name)                      // an option whose label is data
+status.UnmarshalText([]byte("bogus"))             // an error: not a value of OrderStatus
+cfg.AfterConnect = models.RegisterTypes            // pgxpool: enums and enum arrays
 
 // import "github.com/epistemer/models/listing"
 rows, total, err := q.ListShopOrderListView(ctx, listing.Query{  // a page of a view
@@ -53,6 +57,18 @@ sql:
         out: "models"
         sql_package: "pgx/v5"
         emit_all_enum_values: true
+        emit_pointers_for_null_types: true # optional: *T for nullable columns
+        overrides:                         # optional: your types; column sets read them
+          - db_type: "pg_catalog.numeric"
+            go_type: {import: "github.com/shopspring/decimal", type: "Decimal"}
+          - db_type: "pg_catalog.numeric"
+            go_type: {import: "github.com/shopspring/decimal", type: "Decimal", pointer: true}
+            nullable: true
+          - db_type: "timestamptz"   # date, pg_catalog.timestamp likewise
+            go_type: {import: "time", type: "Time"}
+          - db_type: "timestamptz"
+            go_type: {import: "time", type: "Time", pointer: true}
+            nullable: true
       json:
         out: "models"
         filename: "codegen_request.json"
@@ -71,14 +87,34 @@ producers:
         domain: sqlc.request/v1
 use:
   - github.com/epistemer/models:
-      generators: [labels, enums, views]
+      generators: [labels, enums, views, pgx]
       params:
-        table_prefix: shop_   # if your tables carry one; else use [labels, enums, views]
+        table_prefix: shop_   # if your tables carry one; else use [labels, enums, views, pgx]
   - github.com/epistemer/i18n: [labels]
 ```
 
-`views` needs sqlc's `sql_package: "pgx/v5"`; leave it out of the list if
-the app has no view whose name ends in `_view`, or uses another driver.
+`views` and `pgx` need sqlc's `sql_package: "pgx/v5"` (`pgx` needs v5.6.0
+or later); leave `views` out of the list if the app has no view whose name
+ends in `_view`, and both if it uses another driver.
+
+**sqlc's Go options.** Column sets read whatever Go type sqlc gives a
+field: pgtype's with its defaults, `*T` with
+`emit_pointers_for_null_types: true`, or an override's type such as
+`decimal.Decimal`, `time.Time`, `uuid.UUID` or an app's `type ID int64`.
+A type they can't read panics when the models package is initialized, so
+any test that imports it catches it. With pointers on, sqlc still types
+`date`, `timestamp`, `timestamptz` and `uuid` with pgtype unless you
+override them, and it matches `db_type` spelled `timestamptz`,
+`pg_catalog.timestamp`, `date`, `uuid`, `pg_catalog.numeric` and
+`pg_catalog.interval` (it ignores `pg_catalog.timestamptz` and `timestamp`
+without a word). `decimal.Decimal`'s text drops trailing zeros (`12.5` for
+`12.50`). `interval` takes no kind and is left out of a set.
+
+**Enums.** Each enum type gets `MarshalText` and `UnmarshalText`, which
+refuse a value the enum doesn't have, so handlers answers a bad path
+parameter with a 400. `RegisterTypes(ctx, conn)` registers every enum and
+its array with pgx, which can't encode `[]OrderStatus` without it: set it
+as your pool's `AfterConnect`.
 
 **Listings.** A `listing.Query` names columns by their SQL names; an
 unknown one, a search with no `SearchIn`, a nil filter value or a negative
@@ -132,10 +168,10 @@ go tool genx
 go mod tidy
 ```
 
-genx runs sqlc, then models' `labels`, `enums` and `views`, then i18n's
-`labels`, and writes `models/zz_models.labels.json`,
+genx runs sqlc, then models' `labels`, `enums`, `views` and `pgx`, then
+i18n's `labels`, and writes `models/zz_models.labels.json`,
 `models/zz_models_enums.go`, `models/zz_models_views.go` (when a view's name
-ends in `_view`) and `models/zz_models_i18n.go`. Commit them with `codegen_request.json` and
+ends in `_view`), `models/zz_models_pgx.go` and `models/zz_models_i18n.go`. Commit them with `codegen_request.json` and
 `genx.lock`. To regenerate from `go generate`, put
 `//go:generate go tool genx` in a file of any package genx doesn't write
 into, and not in the `//go:build genx` file, which `go generate` skips.
@@ -159,7 +195,8 @@ People then translate the labels in the running app; see i18n.
 | its column `customer_id` | `table.shop_order.Order_CustomerId` | `L10nOrder_CustomerId` | `table.shop_order.customer_id` |
 | view `shop_order_list_view` | `table.shop_order_list_view` | `L10nOrderListView`; method `ListShopOrderListView` | `table.shop_order_list_view` |
 
-The English text is the SQL comment, else the name made readable. Keys are
+The English text is the SQL comment, else the name made readable; an enum
+value's is the value made readable (`in_review` → "In Review"). Keys are
 permanent, and changing `table_prefix` changes column keys. Names that
 would give a key two meanings, or a variable that can't compile, stop the
 run with a message. [docs/interface.md](docs/interface.md) has every rule,
@@ -170,7 +207,7 @@ refusal and limit.
 | Document | Answers |
 |----------|---------|
 | [docs/interface.md](docs/interface.md) | The contract: what an app writes and gets back (locked) |
-| [docs/adr/](docs/adr/) | Why: the design (0001), the zp spike (0002), the test module (0003), zp on models (0004), listings of views (0005) |
+| [docs/adr/](docs/adr/) | Why: the design (0001), the zp spike (0002), the test module (0003), zp on models (0004), listings of views (0005), UI interfaces (0006), column sets (0007, 0008) |
 | [docs/roadmap.md](docs/roadmap.md) | The plan, with a done-when for each item |
 | [docs/status.md](docs/status.md) | The log of working sessions |
 | [CHANGELOG.md](CHANGELOG.md) | Releases |
