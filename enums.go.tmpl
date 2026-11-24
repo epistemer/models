@@ -3,6 +3,8 @@
 package {{.package}}
 
 import (
+	"fmt"
+
 	"github.com/epistemer/i18n"
 	"github.com/epistemer/models/option"
 )
@@ -20,6 +22,25 @@ func (t {{.type}}) Label() i18n.TKer {
 
 // Value returns t as a string, for option.SelectOption.
 func (t {{.type}}) Value() string { return string(t) }
+
+// MarshalText returns t's value, or an error when t isn't a value of
+// {{.type}}.
+func (t {{.type}}) MarshalText() ([]byte, error) {
+	if t.Label() == nil {
+		return nil, fmt.Errorf("models: %q is not a value of {{.type}}", string(t))
+	}
+	return []byte(t), nil
+}
+
+// UnmarshalText sets t to text, or returns an error when text isn't a
+// value of {{.type}}.
+func (t *{{.type}}) UnmarshalText(text []byte) error {
+	if {{.type}}(text).Label() == nil {
+		return fmt.Errorf("models: %q is not a value of {{.type}}", string(text))
+	}
+	*t = {{.type}}(text)
+	return nil
+}
 
 // All{{.type}}Options returns every value of {{.type}}, in the
 // schema's order, as select options.

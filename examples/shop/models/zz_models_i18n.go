@@ -5,10 +5,10 @@ package models
 import "github.com/epistemer/i18n"
 
 var (
-	L10nOrderStatusPending     = i18n.Key("enum.order_status.pending", "pending")
-	L10nOrderStatusPaid        = i18n.Key("enum.order_status.paid", "paid")
-	L10nOrderStatusShipped     = i18n.Key("enum.order_status.shipped", "shipped")
-	L10nOrderStatusCancelled   = i18n.Key("enum.order_status.cancelled", "cancelled")
+	L10nOrderStatusPending     = i18n.Key("enum.order_status.pending", "Pending")
+	L10nOrderStatusPaid        = i18n.Key("enum.order_status.paid", "Paid")
+	L10nOrderStatusShipped     = i18n.Key("enum.order_status.shipped", "Shipped")
+	L10nOrderStatusCancelled   = i18n.Key("enum.order_status.cancelled", "Cancelled")
 	L10nCustomer               = i18n.Key("table.shop_customer", "Customer")
 	L10nCustomer_Id            = i18n.Key("table.shop_customer.Customer_Id", "Id")
 	L10nCustomer_Email         = i18n.Key("table.shop_customer.Customer_Email", "Email address")

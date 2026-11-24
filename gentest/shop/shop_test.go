@@ -35,9 +35,9 @@ func TestTranslations(t *testing.T) {
 		key    string
 		ar, en string
 	}{
-		{"enum value through Label", shop.OrderStatusPaid.Label(), "enum.order_status.paid", "مدفوع", "paid"},
-		{"numbered duplicate", shop.PaymentMethodValue4.Label(), "enum.payment_method.pay_pal", "باي بال", "pay_pal"},
-		{"the value it duplicates", shop.PaymentMethodPayPal.Label(), "enum.payment_method.pay-pal", "pay-pal", "pay-pal"},
+		{"enum value through Label", shop.OrderStatusPaid.Label(), "enum.order_status.paid", "مدفوع", "Paid"},
+		{"numbered duplicate", shop.PaymentMethodValue4.Label(), "enum.payment_method.pay_pal", "باي بال", "Pay Pal"},
+		{"the value it duplicates", shop.PaymentMethodPayPal.Label(), "enum.payment_method.pay-pal", "Pay Pal", "Pay Pal"},
 		{"empty value", shop.PaymentMethodValue8.Label(), "enum.payment_method.", "", ""},
 		{"table variable", shop.L10nOrderLine, "table.shop_order_line", "سطر الطلب", "Order Line"},
 		{"view by path", shop.L10n("table.shop_order_summary"), "table.shop_order_summary", "ملخص الطلبات", "Orders at a glance"},
