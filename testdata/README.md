@@ -58,6 +58,7 @@ Table rows give the label's key, variable, path or text, as named.
 | A comment of white space only | `shop_order.shop_ref` | text `Ref` |
 | A view, with a comment | `shop_order_summary` | key `table.shop_order_summary`, text `Orders at a glance` |
 | A view whose name ends in `_view`, with a nullable enum and a column named `order` | `shop_order_list_view` | method `ListShopOrderListView`, fields `ID` and `Order` (interface §4.3) |
+| A column of every kind, nullable and not, and three no kind takes | `shop_kinds_view`, with `timestamptz` and `interval` since A5 | `ShopKindsViewColumns`; `gentest/shopptr` reads it through sqlc's pointers and overrides |
 | A table whose name ends in `_view` | `shop_page_view` | method `ListShopPageView` |
 
 The refusals (another schema, two requests, duplicates, an empty name after

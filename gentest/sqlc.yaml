@@ -14,3 +14,53 @@ sql:
       json:
         out: "shop"
         filename: "request.json"
+  # The same schema and queries, generated into package shopptr with
+  # pointers for null types and overrides (A5, ADR 0008). It writes no
+  # request: models' files for shopptr are shop's, with the package renamed
+  # (TestPointerPackage), since sqlc's request carries no Go options.
+  - engine: "postgresql"
+    schema: "../testdata/shop/schema.sql"
+    queries: "../testdata/shop/query.sql"
+    gen:
+      go:
+        package: "shopptr"
+        out: "shopptr"
+        sql_package: "pgx/v5"
+        emit_all_enum_values: true
+        emit_pointers_for_null_types: true
+        overrides:
+          # The db_type spellings sqlc v1.29.0 matches; it silently ignores
+          # pg_catalog.timestamptz and timestamp.
+          - db_type: "pg_catalog.numeric"
+            go_type: {import: "github.com/shopspring/decimal", type: "Decimal"}
+          - db_type: "pg_catalog.numeric"
+            go_type: {import: "github.com/shopspring/decimal", type: "Decimal", pointer: true}
+            nullable: true
+          - db_type: "uuid"
+            go_type: {import: "github.com/google/uuid", type: "UUID"}
+          - db_type: "uuid"
+            go_type: {import: "github.com/google/uuid", type: "UUID", pointer: true}
+            nullable: true
+          - db_type: "date"
+            go_type: {import: "time", type: "Time"}
+          - db_type: "date"
+            go_type: {import: "time", type: "Time", pointer: true}
+            nullable: true
+          - db_type: "pg_catalog.timestamp"
+            go_type: {import: "time", type: "Time"}
+          - db_type: "pg_catalog.timestamp"
+            go_type: {import: "time", type: "Time", pointer: true}
+            nullable: true
+          - db_type: "timestamptz"
+            go_type: {import: "time", type: "Time"}
+          - db_type: "timestamptz"
+            go_type: {import: "time", type: "Time", pointer: true}
+            nullable: true
+          - db_type: "pg_catalog.interval"
+            go_type: {import: "time", type: "Duration"}
+          - db_type: "pg_catalog.interval"
+            go_type: {import: "time", type: "Duration", pointer: true}
+            nullable: true
+          # An app's own type over int8, by column.
+          - column: "shop_kinds_view.id"
+            go_type: {import: "github.com/epistemer/models/gentest/ids", type: "KindID"}

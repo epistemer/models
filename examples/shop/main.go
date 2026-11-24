@@ -42,6 +42,10 @@ func listPaid(ctx context.Context, url string) error {
 		return err
 	}
 	defer conn.Close(ctx)
+	// With a pool: cfg.AfterConnect = models.RegisterTypes.
+	if err := models.RegisterTypes(ctx, conn); err != nil {
+		return err
+	}
 	var q models.Listings = models.New(conn)
 	orders, total, err := q.ListShopOrderListView(ctx, listing.Query{
 		Filters: []listing.Filter{{Column: "status", Op: listing.Eq, Value: models.OrderStatusPaid}},

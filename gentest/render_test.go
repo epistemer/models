@@ -2,6 +2,7 @@ package gentest
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -84,6 +85,8 @@ func TestDefaults(t *testing.T) {
 		only(t, render(t, "enums", nil, shopRequest), "models/zz_models_enums.go"))
 	golden(t, "shop-defaults_views.go.txt",
 		only(t, render(t, "views", nil, shopRequest), "models/zz_models_views.go"))
+	golden(t, "shop-defaults_pgx.go.txt",
+		only(t, render(t, "pgx", nil, shopRequest), "models/zz_models_pgx.go"))
 }
 
 // TestDirAndPackage: the files follow dir and package.
@@ -103,9 +106,13 @@ func TestDirAndPackage(t *testing.T) {
 	if !bytes.Contains(views, []byte("\npackage db\n")) {
 		t.Errorf("views file isn't in package db:\n%s", views)
 	}
+	pgx := only(t, render(t, "pgx", params, shopRequest), "internal/store/zz_db_pgx.go")
+	if !bytes.Contains(pgx, []byte("\npackage db\n")) {
+		t.Errorf("pgx file isn't in package db:\n%s", pgx)
+	}
 }
 
-// TestPlain: a schema with no enums gets labels and no enums file.
+// TestPlain: a schema with no enums gets labels and no enums or pgx file.
 func TestPlain(t *testing.T) {
 	plain := genxtest.Input{Path: "../testdata/plain/request.json", Domain: domain}
 	golden(t, "plain.labels.json",
@@ -115,6 +122,9 @@ func TestPlain(t *testing.T) {
 	}
 	if files := render(t, "views", nil, plain); len(files) != 0 {
 		t.Errorf("views wrote %v for a schema without _view relations", names(files))
+	}
+	if files := render(t, "pgx", nil, plain); len(files) != 0 {
+		t.Errorf("pgx wrote %v for a schema without enums", names(files))
 	}
 }
 
@@ -160,7 +170,7 @@ func enum(name string, values ...string) string {
 // TestNothingToWrite: no request, or a schema that gives no label, writes
 // nothing; an enum with no values still gets its Label().
 func TestNothingToWrite(t *testing.T) {
-	for _, g := range []string{"labels", "enums", "views"} {
+	for _, g := range []string{"labels", "enums", "views", "pgx"} {
 		if files := render(t, g, nil); len(files) != 0 {
 			t.Errorf("%s with no request wrote %v", g, names(files))
 		}
@@ -197,6 +207,7 @@ func TestPackageForADirThatIsNotOne(t *testing.T) {
 	params := map[string]any{"dir": "my-models", "package": "models"}
 	only(t, render(t, "labels", params, shopRequest), "my-models/zz_models.labels.json")
 	only(t, render(t, "enums", params, shopRequest), "my-models/zz_models_enums.go")
+	only(t, render(t, "pgx", params, shopRequest), "my-models/zz_models_pgx.go")
 }
 
 // TestNotReservedOutsideASCII: sqlc keeps letters outside ASCII in its Go
@@ -209,7 +220,7 @@ func TestNotReservedOutsideASCII(t *testing.T) {
 // TestParamsWithoutRequest: parameters are checked on every run (§3).
 func TestParamsWithoutRequest(t *testing.T) {
 	for _, params := range []map[string]any{{"dir": "models/"}, {"package": "type"}, {"dir": "my models", "package": "models"}} {
-		for _, g := range []string{"labels", "enums", "views"} {
+		for _, g := range []string{"labels", "enums", "views", "pgx"} {
 			f := &failure{TB: t}
 			genxtest.RenderParams(f, root, g, params)
 			if !strings.Contains(f.msg, "models: parameter") {
@@ -317,7 +328,7 @@ func TestRefusals(t *testing.T) {
 			return []genxtest.Input{request(t, "public", public(table("note", "id"), ""), `{"name": "L10nNotes"}`)}
 		}, `models: query "L10nNotes" gives sqlc the Go name "L10nNotes"; names starting with "L10n" are reserved for labels`},
 	} {
-		for _, g := range []string{"labels", "enums", "views"} {
+		for _, g := range []string{"labels", "enums", "views", "pgx"} {
 			t.Run(c.name+"/"+g, func(t *testing.T) {
 				f := &failure{TB: t}
 				files := genxtest.RenderParams(f, root, g, c.params, c.inputs(t)...)
@@ -424,5 +435,136 @@ func TestViewsControlCharacter(t *testing.T) {
 	genxtest.RenderParams(f, root, "views", nil, request(t, "public", public(table("order\n_view", "id"), ""), ""))
 	if !strings.Contains(f.msg, "isn't a Go identifier") {
 		t.Errorf("message %q", f.msg)
+	}
+}
+
+// TestPgxNoEnums: a query hiding a pgx name is not refused when the schema has
+// no enums, since pgx writes nothing.
+func TestPgxNoEnums(t *testing.T) {
+	in := request(t, "public", public(table("note", "id"), ""), `{"name": "Pgx"}`)
+	if files := render(t, "pgx", nil, in); len(files) != 0 {
+		t.Errorf("pgx wrote %v for a schema without enums", names(files))
+	}
+}
+
+// TestPgxRefusals: the cases of interface §6 that are pgx's own. labels,
+// enums and views make none of them.
+func TestPgxRefusals(t *testing.T) {
+	in := func(tables, enums, queries string) func(t *testing.T) genxtest.Input {
+		return func(t *testing.T) genxtest.Input { return request(t, "public", public(tables, enums), queries) }
+	}
+	for _, c := range []struct {
+		name  string
+		input func(t *testing.T) genxtest.Input
+		want  string
+	}{
+		{"enum named RegisterTypes", in("", enum("register_types", "a"), ""), `models: enum "register_types" gives sqlc the Go name "RegisterTypes", which pgx declares`},
+		{"query hiding context", in("", enum("kind", "a"), `{"name": "Context"}`), `models: query "Context" gives sqlc the constant "context", which hides a name the pgx file uses`},
+		{"query hiding pgx", in("", enum("kind", "a"), `{"name": "Pgx"}`), `models: query "Pgx" gives sqlc the constant "pgx", which hides a name the pgx file uses`},
+		{"query named pgx", in("", enum("kind", "a"), `{"name": "pgx"}`), `models: query "pgx" gives sqlc the constant "pgx", which hides a name the pgx file uses`},
+		{"query hiding string", in("", enum("kind", "a"), `{"name": "String"}`), `models: query "String" gives sqlc the constant "string", which hides a name the pgx file uses`},
+		{"query hiding error", in("", enum("kind", "a"), `{"name": "Error"}`), `models: query "Error" gives sqlc the constant "error", which hides a name the pgx file uses`},
+		{"query hiding nil", in("", enum("kind", "a"), `{"name": "Nil"}`), `models: query "Nil" gives sqlc the constant "nil", which hides a name the pgx file uses`},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := &failure{TB: t}
+			files := genxtest.RenderParams(f, root, "pgx", nil, c.input(t))
+			if f.msg == "" {
+				t.Fatalf("no refusal; wrote %v", names(files))
+			}
+			if !strings.Contains(f.msg, c.want) {
+				t.Errorf("message:\n%s\nwant it to contain:\n%s", f.msg, c.want)
+			}
+			for _, g := range []string{"labels", "views"} {
+				f := &failure{TB: t}
+				genxtest.RenderParams(f, root, g, nil, c.input(t))
+				if f.msg != "" {
+					t.Errorf("%s refused it too: %s", g, f.msg)
+				}
+			}
+		})
+	}
+}
+
+// TestEnumsRefusals: a query whose constant hides a name the enums file
+// uses (§6, A5). labels makes no such refusal; a schema without enums
+// writes no enums file and refuses nothing.
+func TestEnumsRefusals(t *testing.T) {
+	for _, name := range []string{"Fmt", "I18n", "Option", "String", "Error", "Nil", "Byte", "fmt"} {
+		t.Run(name, func(t *testing.T) {
+			q := `{"name": "` + name + `"}`
+			c := strings.ToLower(name[:1]) + name[1:]
+			f := &failure{TB: t}
+			files := genxtest.RenderParams(f, root, "enums", nil, request(t, "public", public("", enum("kind", "a")), q))
+			want := `models: query "` + name + `" gives sqlc the constant "` + c + `", which hides a name the enums file uses`
+			if !strings.Contains(f.msg, want) {
+				t.Fatalf("message %q, want %q; wrote %v", f.msg, want, names(files))
+			}
+			f = &failure{TB: t}
+			genxtest.RenderParams(f, root, "labels", nil, request(t, "public", public("", enum("kind", "a")), q))
+			if f.msg != "" {
+				t.Errorf("labels refused it too: %s", f.msg)
+			}
+			f = &failure{TB: t}
+			genxtest.RenderParams(f, root, "enums", nil, request(t, "public", public(table("note", "id"), ""), q))
+			if f.msg != "" {
+				t.Errorf("enums refused it without an enum: %s", f.msg)
+			}
+		})
+	}
+}
+
+// TestReadableValue: enum values' English text follows readableValue (§5.1, §5.3, A5.5),
+// while tables and columns keep readable.
+func TestReadableValue(t *testing.T) {
+	in := request(t, "public", public(
+		table("user_note", "userID"),
+		enum("a",
+			"in_review", "credit-card", "bank/transfer", "cash:on:delivery",
+			"userID", "HTTPServer", "ABcDEf", "u2f", "level_3",
+			"café", "état", "!!", "", "__", "id",
+		)+", "+enum("b", "inReview"),
+	), "")
+	raw := only(t, render(t, "labels", nil, in), "models/zz_models.labels.json")
+	var doc struct {
+		Labels []struct {
+			Key  string `json:"key"`
+			Path string `json:"path"`
+			Text string `json:"text"`
+			Var  string `json:"var"`
+		} `json:"labels"`
+	}
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatal(err)
+	}
+	got := make(map[string]string, len(doc.Labels))
+	for _, l := range doc.Labels {
+		got[l.Key] = l.Text
+	}
+	for _, tc := range []struct {
+		key, want string
+	}{
+		{"enum.a.in_review", "In Review"},
+		{"enum.a.credit-card", "Credit Card"},
+		{"enum.a.bank/transfer", "Bank/transfer"},
+		{"enum.a.cash:on:delivery", "Cash:on:delivery"},
+		{"enum.b.inReview", "In Review"},
+		{"enum.a.userID", "User ID"},
+		{"enum.a.HTTPServer", "HTTP Server"},
+		{"enum.a.ABcDEf", "A Bc D Ef"},
+		{"enum.a.u2f", "U2f"},
+		{"enum.a.level_3", "Level 3"},
+		{"enum.a.café", "Café"},
+		{"enum.a.état", "état"},
+		{"enum.a.!!", "!!"},
+		{"enum.a.", ""},
+		{"enum.a.__", "__"},
+		{"enum.a.id", "Id"},
+		{"table.user_note", "User Note"},
+		{"table.user_note.UserNote_UserID", "UserID"},
+	} {
+		if g, ok := got[tc.key]; !ok || g != tc.want {
+			t.Errorf("key %q: got %q (present=%v), want %q", tc.key, g, ok, tc.want)
+		}
 	}
 }

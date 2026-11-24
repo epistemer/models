@@ -3,6 +3,59 @@
 Newest first. Every working session adds an entry: what landed, the decisions
 taken for you, what's next, and what's waiting on you.
 
+## 2026-11-24 — A5: Confab iteration 1 (v0.5.0, M7)
+
+**Locked** by epistemer on 2026-11-24 with every default (A5.1a–c,
+A5.3a–b), from Confab's findings F5, F8, F15, F19 and F28 and epistemer's
+answers on the board. ADR 0008 for A5.1. **Released** as v0.5.0 (#16).
+
+**Landed:**
+- F2 (#15, docs only): `table_prefix`'s trade-off, that sqlc keeps the
+  prefix in its Go names, in interface §3 and the README.
+- A5.1: `column.Field`; every getter but an enum's calls it, so one views
+  file serves sqlc's defaults and `emit_pointers_for_null_types` with
+  overrides. `gentest/shopptr` is the shop's sqlc Go with pointers and
+  zp-shaped overrides (decimal, uuid, time.Time, time.Duration, an app's
+  int64 type). It reuses shop's generated files with the package renamed,
+  and a PostgreSQL test reads the same rows through both configurations
+  to identical values. `shop_kinds_view` gains `timestamptz` and
+  `interval`.
+- A5.2 text methods on enums, A5.3 the `pgx` generator with
+  `RegisterTypes` (tested against PostgreSQL: `[]OrderStatus` fails before,
+  works after), A5.4 `option.Static`, A5.5 enum text made readable.
+- The example uses pointers, time overrides and `RegisterTypes`.
+
+**Who did what:** M7.2 (`column.Field`, `option.Static`) by Gemini 4
+Hydrogen (Medium), about 72k tokens; M7.3 (text methods, readable values,
+`pgx`) by Gemini 4 Hydrogen (High), about 199k tokens. Both ran in
+worktrees outside the repo, and Claude reviewed them. Argon was cooling
+down until about 2026-11-28. Claude did M7.4 and M7.5.
+
+**Review** ([0014](reviews/0014-a5.md)): Gemini 4 Hydrogen (High), about
+96k tokens. Twelve findings; seven changed the code or docs:
+- `enums` refuses a query constant that hides `fmt` and the file's other
+  names;
+- a Valuer's named basic result is read;
+- a pointer to an interface is refused at init;
+- pgtype fields are read without reflection per row.
+
+These are recorded as clarifications in A5.
+
+**Decided for you:** the board's M1–M5 are A5.1–A5.5 here, since M1–M7
+name this repository's milestones. The `db_type` spellings sqlc v1.29.0
+matches are documented (it silently ignores `pg_catalog.timestamptz` and
+`timestamp`).
+
+**For Confab** (not edited here):
+- It can delete `internal/pg`, its hand-written `LoadTypes` in
+  `AfterConnect` (use `models.RegisterTypes`), and `dataLabel` (use
+  `option.Static`).
+- It should switch its sqlc config to `emit_pointers_for_null_types: true`
+  with overrides, including `date` and `timestamptz` to `time.Time`, which
+  stay pgtype otherwise. Then add `pgx` to models' generators.
+
+**Waiting on you:** nothing.
+
 ## 2026-11-22 — A4: column sets for views (v0.4.0)
 
 **Accepted** by epistemer with the defaults of M1–M5 (ADR 0007).

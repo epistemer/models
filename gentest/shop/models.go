@@ -300,6 +300,8 @@ type ShopKindsView struct {
 	Active pgtype.Bool
 	Day    pgtype.Date
 	At     pgtype.Timestamp
+	Seen   pgtype.Timestamptz
+	Span   pgtype.Interval
 	State  NullOrderStatus
 	Tags   []string
 	Meta   []byte

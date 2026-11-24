@@ -5,25 +5,25 @@ package shop
 import "github.com/epistemer/i18n"
 
 var (
-	L10nOrderStatusPending          = i18n.Key("enum.order_status.pending", "pending")
-	L10nOrderStatusPaid             = i18n.Key("enum.order_status.paid", "paid")
-	L10nOrderStatusShipped          = i18n.Key("enum.order_status.shipped", "shipped")
-	L10nPaymentMethodCreditCard     = i18n.Key("enum.payment_method.credit-card", "credit-card")
-	L10nPaymentMethodBankTransfer   = i18n.Key("enum.payment_method.bank/transfer", "bank/transfer")
-	L10nPaymentMethodCashOnDelivery = i18n.Key("enum.payment_method.cash:on:delivery", "cash:on:delivery")
-	L10nPaymentMethodPayPal         = i18n.Key("enum.payment_method.pay-pal", "pay-pal")
-	L10nPaymentMethodValue4         = i18n.Key("enum.payment_method.pay_pal", "pay_pal")
+	L10nOrderStatusPending          = i18n.Key("enum.order_status.pending", "Pending")
+	L10nOrderStatusPaid             = i18n.Key("enum.order_status.paid", "Paid")
+	L10nOrderStatusShipped          = i18n.Key("enum.order_status.shipped", "Shipped")
+	L10nPaymentMethodCreditCard     = i18n.Key("enum.payment_method.credit-card", "Credit Card")
+	L10nPaymentMethodBankTransfer   = i18n.Key("enum.payment_method.bank/transfer", "Bank/transfer")
+	L10nPaymentMethodCashOnDelivery = i18n.Key("enum.payment_method.cash:on:delivery", "Cash:on:delivery")
+	L10nPaymentMethodPayPal         = i18n.Key("enum.payment_method.pay-pal", "Pay Pal")
+	L10nPaymentMethodValue4         = i18n.Key("enum.payment_method.pay_pal", "Pay Pal")
 	L10nPaymentMethodValue5         = i18n.Key("enum.payment_method.!!", "!!")
-	L10nPaymentMethodValue6         = i18n.Key("enum.payment_method.value_5", "value_5")
-	L10nPaymentMethodCaf            = i18n.Key("enum.payment_method.café", "café")
+	L10nPaymentMethodValue6         = i18n.Key("enum.payment_method.value_5", "Value 5")
+	L10nPaymentMethodCaf            = i18n.Key("enum.payment_method.café", "Café")
 	L10nPaymentMethodValue8         = i18n.Key("enum.payment_method.", "")
-	L10nIDKindID                    = i18n.Key("enum.id_kind.id", "id")
-	L10nIDKindUserID                = i18n.Key("enum.id_kind.user_id", "user_id")
-	L10nIDKindUuid                  = i18n.Key("enum.id_kind.uuid", "uuid")
-	L10n_2faMethodTotp              = i18n.Key("enum.2fa_method.totp", "totp")
-	L10n_2faMethodSms               = i18n.Key("enum.2fa_method.sms", "sms")
-	L10n_2faMethodU2f               = i18n.Key("enum.2fa_method.u2f", "u2f")
-	L10n_2faMethodLevel3            = i18n.Key("enum.2fa_method.level_3", "level_3")
+	L10nIDKindID                    = i18n.Key("enum.id_kind.id", "Id")
+	L10nIDKindUserID                = i18n.Key("enum.id_kind.user_id", "User Id")
+	L10nIDKindUuid                  = i18n.Key("enum.id_kind.uuid", "Uuid")
+	L10n_2faMethodTotp              = i18n.Key("enum.2fa_method.totp", "Totp")
+	L10n_2faMethodSms               = i18n.Key("enum.2fa_method.sms", "Sms")
+	L10n_2faMethodU2f               = i18n.Key("enum.2fa_method.u2f", "U2f")
+	L10n_2faMethodLevel3            = i18n.Key("enum.2fa_method.level_3", "Level 3")
 	L10nCustomer                    = i18n.Key("table.shop_customer", "Customer")
 	L10nCustomer_Id                 = i18n.Key("table.shop_customer.Customer_Id", "Id")
 	L10nCustomer_Email              = i18n.Key("table.shop_customer.Customer_Email", "Where receipts go")
@@ -71,6 +71,8 @@ var (
 	L10nKindsView_Active            = i18n.Key("table.shop_kinds_view.KindsView_Active", "Active")
 	L10nKindsView_Day               = i18n.Key("table.shop_kinds_view.KindsView_Day", "Day")
 	L10nKindsView_At                = i18n.Key("table.shop_kinds_view.KindsView_At", "At")
+	L10nKindsView_Seen              = i18n.Key("table.shop_kinds_view.KindsView_Seen", "Seen")
+	L10nKindsView_Span              = i18n.Key("table.shop_kinds_view.KindsView_Span", "Span")
 	L10nKindsView_State             = i18n.Key("table.shop_kinds_view.KindsView_State", "State")
 	L10nKindsView_Tags              = i18n.Key("table.shop_kinds_view.KindsView_Tags", "Tags")
 	L10nKindsView_Meta              = i18n.Key("table.shop_kinds_view.KindsView_Meta", "Meta")
@@ -144,6 +146,8 @@ var l10n = map[string]i18n.TKer{
 	"table.shop_kinds_view.active":         L10nKindsView_Active,
 	"table.shop_kinds_view.day":            L10nKindsView_Day,
 	"table.shop_kinds_view.at":             L10nKindsView_At,
+	"table.shop_kinds_view.seen":           L10nKindsView_Seen,
+	"table.shop_kinds_view.span":           L10nKindsView_Span,
 	"table.shop_kinds_view.state":          L10nKindsView_State,
 	"table.shop_kinds_view.tags":           L10nKindsView_Tags,
 	"table.shop_kinds_view.meta":           L10nKindsView_Meta,

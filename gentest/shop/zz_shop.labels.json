@@ -4,49 +4,49 @@
     {
       "key": "enum.order_status.pending",
       "path": "enum.order_status.pending",
-      "text": "pending",
+      "text": "Pending",
       "var": "L10nOrderStatusPending"
     },
     {
       "key": "enum.order_status.paid",
       "path": "enum.order_status.paid",
-      "text": "paid",
+      "text": "Paid",
       "var": "L10nOrderStatusPaid"
     },
     {
       "key": "enum.order_status.shipped",
       "path": "enum.order_status.shipped",
-      "text": "shipped",
+      "text": "Shipped",
       "var": "L10nOrderStatusShipped"
     },
     {
       "key": "enum.payment_method.credit-card",
       "path": "enum.payment_method.credit-card",
-      "text": "credit-card",
+      "text": "Credit Card",
       "var": "L10nPaymentMethodCreditCard"
     },
     {
       "key": "enum.payment_method.bank/transfer",
       "path": "enum.payment_method.bank/transfer",
-      "text": "bank/transfer",
+      "text": "Bank/transfer",
       "var": "L10nPaymentMethodBankTransfer"
     },
     {
       "key": "enum.payment_method.cash:on:delivery",
       "path": "enum.payment_method.cash:on:delivery",
-      "text": "cash:on:delivery",
+      "text": "Cash:on:delivery",
       "var": "L10nPaymentMethodCashOnDelivery"
     },
     {
       "key": "enum.payment_method.pay-pal",
       "path": "enum.payment_method.pay-pal",
-      "text": "pay-pal",
+      "text": "Pay Pal",
       "var": "L10nPaymentMethodPayPal"
     },
     {
       "key": "enum.payment_method.pay_pal",
       "path": "enum.payment_method.pay_pal",
-      "text": "pay_pal",
+      "text": "Pay Pal",
       "var": "L10nPaymentMethodValue4"
     },
     {
@@ -58,13 +58,13 @@
     {
       "key": "enum.payment_method.value_5",
       "path": "enum.payment_method.value_5",
-      "text": "value_5",
+      "text": "Value 5",
       "var": "L10nPaymentMethodValue6"
     },
     {
       "key": "enum.payment_method.café",
       "path": "enum.payment_method.café",
-      "text": "café",
+      "text": "Café",
       "var": "L10nPaymentMethodCaf"
     },
     {
@@ -76,43 +76,43 @@
     {
       "key": "enum.id_kind.id",
       "path": "enum.id_kind.id",
-      "text": "id",
+      "text": "Id",
       "var": "L10nIDKindID"
     },
     {
       "key": "enum.id_kind.user_id",
       "path": "enum.id_kind.user_id",
-      "text": "user_id",
+      "text": "User Id",
       "var": "L10nIDKindUserID"
     },
     {
       "key": "enum.id_kind.uuid",
       "path": "enum.id_kind.uuid",
-      "text": "uuid",
+      "text": "Uuid",
       "var": "L10nIDKindUuid"
     },
     {
       "key": "enum.2fa_method.totp",
       "path": "enum.2fa_method.totp",
-      "text": "totp",
+      "text": "Totp",
       "var": "L10n_2faMethodTotp"
     },
     {
       "key": "enum.2fa_method.sms",
       "path": "enum.2fa_method.sms",
-      "text": "sms",
+      "text": "Sms",
       "var": "L10n_2faMethodSms"
     },
     {
       "key": "enum.2fa_method.u2f",
       "path": "enum.2fa_method.u2f",
-      "text": "u2f",
+      "text": "U2f",
       "var": "L10n_2faMethodU2f"
     },
     {
       "key": "enum.2fa_method.level_3",
       "path": "enum.2fa_method.level_3",
-      "text": "level_3",
+      "text": "Level 3",
       "var": "L10n_2faMethodLevel3"
     },
     {
@@ -396,6 +396,18 @@
       "path": "table.shop_kinds_view.at",
       "text": "At",
       "var": "L10nKindsView_At"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Seen",
+      "path": "table.shop_kinds_view.seen",
+      "text": "Seen",
+      "var": "L10nKindsView_Seen"
+    },
+    {
+      "key": "table.shop_kinds_view.KindsView_Span",
+      "path": "table.shop_kinds_view.span",
+      "text": "Span",
+      "var": "L10nKindsView_Span"
     },
     {
       "key": "table.shop_kinds_view.KindsView_State",
