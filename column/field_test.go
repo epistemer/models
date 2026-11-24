@@ -3,6 +3,7 @@ package column_test
 import (
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"math"
 	"strings"
 	"testing"
@@ -440,7 +441,7 @@ func TestFieldPanics(t *testing.T) {
 		msg := catchPanic(func() {
 			column.Field(column.Text, func(v any) any { return v })
 		})
-		if msg != "column: can't read a field of interface type" {
+		if msg != "column: text can't read a field of interface type" {
 			t.Errorf("panic = %q", msg)
 		}
 	})
@@ -485,13 +486,64 @@ func TestFieldCallsProbeOnce(t *testing.T) {
 func catchPanic(fn func()) (msg string) {
 	defer func() {
 		if r := recover(); r != nil {
-			msg, _ = r.(string)
-			if msg == "" {
-				t := r
-				_ = t
-			}
+			msg = fmt.Sprint(r)
 		}
 	}()
 	fn()
 	return ""
+}
+
+type codeText string
+
+// namedValuer returns a named string, a named int64 or a [16]byte from
+// Value, as an app's own Valuer may.
+type namedValuer struct{ v driver.Value }
+
+func (n namedValuer) Value() (driver.Value, error) { return n.v, nil }
+
+type namedInt int64
+
+// TestFieldReview covers cases a review of A5 found untested.
+func TestFieldReview(t *testing.T) {
+	text := column.Field(column.Text, func(r namedValuer) any { return r })
+	if v := text(namedValuer{codeText("x")}); v.Text != "x" {
+		t.Errorf("named string from a Valuer: %+v", v)
+	}
+	id := [16]byte{0x12, 0x3e, 0x45, 0x67, 0xe8, 0x9b, 0x12, 0xd3, 0xa4, 0x56, 0x42, 0x66, 0x14, 0x17, 0x40, 0x00}
+	if v := text(namedValuer{id}); v.Text != "123e4567-e89b-12d3-a456-426614174000" {
+		t.Errorf("[16]byte from a Valuer: %+v", v)
+	}
+	integer := column.Field(column.Integer, func(r namedValuer) any { return r })
+	if v := integer(namedValuer{namedInt(5)}); v.Int != 5 {
+		t.Errorf("named int64 from a Valuer: %+v", v)
+	}
+	number := column.Field(column.Number, func(r namedValuer) any { return r })
+	if msg := catchPanic(func() { number(namedValuer{id}) }); msg != "column: number can't take a [16]uint8 from column_test.namedValuer" {
+		t.Errorf("[16]byte to a number: %q", msg)
+	}
+	if msg := catchPanic(func() { column.Field(column.Text, func(r *driver.Valuer) any { return r }) }); msg != "column: text can't read *driver.Valuer" {
+		t.Errorf("a pointer to an interface: %q", msg)
+	}
+	for _, c := range []struct {
+		name string
+		fn   func()
+		want string
+	}{
+		{"string as bool", func() { column.Field(column.Bool, func(r string) any { return r }) }, "column: bool can't read string"},
+		{"int64 as text", func() { column.Field(column.Text, func(r int64) any { return r }) }, "column: text can't read int64"},
+		{"float64 as integer", func() { column.Field(column.Integer, func(r float64) any { return r }) }, "column: integer can't read float64"},
+		{"bool as text", func() { column.Field(column.Text, func(r *bool) any { return r }) }, "column: text can't read *bool"},
+		{"time as text", func() { column.Field(column.Text, func(r time.Time) any { return r }) }, "column: text can't read time.Time"},
+	} {
+		if msg := catchPanic(c.fn); msg != c.want {
+			t.Errorf("%s: %q, want %q", c.name, msg, c.want)
+		}
+	}
+	if v := column.Field(column.Number, func(r string) any { return r })("12.50"); v.Num != 12.5 || v.Text != "12.50" {
+		t.Errorf("a string as a numeric's digits: %+v", v)
+	}
+	ptrText := column.Field(column.Text, func(r *fakeText) any { return r })
+	if !ptrText(nil).Null || !ptrText(&fakeText{}).Null || ptrText(&fakeText{String: "a", Valid: true}).Text != "a" {
+		t.Error("a pointer to a Valuer by value")
+	}
 }

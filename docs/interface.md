@@ -698,6 +698,12 @@ ends in `_view`:
 | A query whose sqlc constant (its name with the first letter lower-cased) hides a name the views file uses: `listing`, `column` (A4), `context`, `append`, `len`, `nil`, `int64`, `string` or `error` | `models: query "Listing" gives sqlc the constant "listing", which hides a name the views file uses` |
 | A view's column set `<Type>Columns` (A4) is already a query's, a relation's or an enum's Go name | `models: view "order_view": its column set "OrderViewColumns" is already a query's, a relation's or an enum's Go name` |
 
+Made by `enums` only (A5), and only when the default schema has an enum:
+
+| Case | Example message |
+|------|-----------------|
+| A query whose sqlc constant hides a name the enums file uses: `fmt`, `i18n`, `option`, `string`, `error`, `nil` or `byte` | `models: query "Fmt" gives sqlc the constant "fmt", which hides a name the enums file uses` |
+
 Made by `pgx` only (A5), and only when the default schema has an enum:
 
 | Case | Example message |
@@ -1015,7 +1021,8 @@ func Static(value, text string) SelectOption
 D7 and §5.3 change: an enum value's text is `readable(v)`, the value
 made readable as handlers' interface §13.3 makes route keys readable. The
 value is split at `.`, `_` and `-`, and where lower case turns to upper
-(a run of capitals stays one word). Each word's first letter is
+(a run of capitals stays one word, and a capital followed by a lower-case
+letter starts a new one: `HTTPServer` is `HTTP Server`). Each word's first letter is
 upper-cased if it is an ASCII letter, and the words are joined with
 spaces. When that leaves no word, the text is the value itself, so an
 empty value keeps an empty text. Keys, paths and variables don't change.
@@ -1039,3 +1046,12 @@ empty value keeps an empty text. Keys, paths and variables don't change.
   §8.1).
 - It changes neozp's labels convention, which said an enum value is
   itself (decisions.md D7, 2026-11-24).
+
+**Clarified while building it** (M7, [review 0014](reviews/0014-a5.md)), by
+Claude as owner: the enums file now imports `fmt`, so `enums` refuses a
+query whose constant hides a name that file uses (§6), as `views` and
+`pgx` do for theirs. A `driver.Valuer` whose value is of a named basic
+type, or a `[16]byte` for Text, is read by the same rules as a field of
+that type. A field that is a pointer to an interface is refused when the
+set is declared. Each refuses only apps whose generated code couldn't
+compile or would panic later.

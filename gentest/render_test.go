@@ -475,12 +475,40 @@ func TestPgxRefusals(t *testing.T) {
 			if !strings.Contains(f.msg, c.want) {
 				t.Errorf("message:\n%s\nwant it to contain:\n%s", f.msg, c.want)
 			}
-			for _, g := range []string{"labels", "enums", "views"} {
+			for _, g := range []string{"labels", "views"} {
 				f := &failure{TB: t}
 				genxtest.RenderParams(f, root, g, nil, c.input(t))
 				if f.msg != "" {
 					t.Errorf("%s refused it too: %s", g, f.msg)
 				}
+			}
+		})
+	}
+}
+
+// TestEnumsRefusals: a query whose constant hides a name the enums file
+// uses (§6, A5). labels makes no such refusal; a schema without enums
+// writes no enums file and refuses nothing.
+func TestEnumsRefusals(t *testing.T) {
+	for _, name := range []string{"Fmt", "I18n", "Option", "String", "Error", "Nil", "Byte", "fmt"} {
+		t.Run(name, func(t *testing.T) {
+			q := `{"name": "` + name + `"}`
+			c := strings.ToLower(name[:1]) + name[1:]
+			f := &failure{TB: t}
+			files := genxtest.RenderParams(f, root, "enums", nil, request(t, "public", public("", enum("kind", "a")), q))
+			want := `models: query "` + name + `" gives sqlc the constant "` + c + `", which hides a name the enums file uses`
+			if !strings.Contains(f.msg, want) {
+				t.Fatalf("message %q, want %q; wrote %v", f.msg, want, names(files))
+			}
+			f = &failure{TB: t}
+			genxtest.RenderParams(f, root, "labels", nil, request(t, "public", public("", enum("kind", "a")), q))
+			if f.msg != "" {
+				t.Errorf("labels refused it too: %s", f.msg)
+			}
+			f = &failure{TB: t}
+			genxtest.RenderParams(f, root, "enums", nil, request(t, "public", public(table("note", "id"), ""), q))
+			if f.msg != "" {
+				t.Errorf("enums refused it without an enum: %s", f.msg)
 			}
 		})
 	}

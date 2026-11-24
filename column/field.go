@@ -33,7 +33,7 @@ func Field[R any](k Kind, field func(R) any) func(R) Value {
 	var zero R
 	ft := reflect.TypeOf(field(zero))
 	if ft == nil {
-		panic("column: can't read a field of interface type")
+		panic(fmt.Sprintf("column: %s can't read a field of interface type", k))
 	}
 	if k == Enum {
 		panic("column: Field doesn't read enums; generated enum getters read the field themselves")
@@ -41,6 +41,13 @@ func Field[R any](k Kind, field func(R) any) func(R) Value {
 
 	if fast, ok := resolveFastPath(k, ft, field); ok {
 		return fast
+	}
+	// A Valuer by value, such as every pgtype type: no reflection per row.
+	if ft.Kind() != reflect.Pointer && ft.Implements(valuerType) {
+		return func(r R) Value {
+			res, err := field(r).(driver.Valuer).Value()
+			return finishValuer(k, ft, res, err)
+		}
 	}
 
 	reader := resolveReflectReader(k, ft, ft)
@@ -122,6 +129,9 @@ func bindFast[R any, T any](isPtr bool, field func(R) any, conv func(T) Value) f
 }
 
 func resolveReflectReader(k Kind, ft, fieldType reflect.Type) func(reflect.Value) Value {
+	if ft.Kind() == reflect.Interface {
+		panicUnsupported(k, fieldType)
+	}
 	if ft.Kind() == reflect.Ptr {
 		elemReader := resolveReflectReader(k, ft.Elem(), fieldType)
 		return func(rv reflect.Value) Value {
@@ -274,7 +284,48 @@ func readValuerResult(k Kind, fieldType reflect.Type, res driver.Value) Value {
 		}
 	}
 
+	if n, ok := normalize(k, res); ok {
+		return readValuerResult(k, fieldType, n)
+	}
 	panic(fmt.Sprintf("column: %s can't take a %T from %s", k, res, fieldType))
+}
+
+// normalize turns a Valuer's result of a named basic type, or a [16]byte
+// for Text, into the unnamed type readValuerResult takes; false when it
+// is neither or already unnamed.
+func normalize(k Kind, res driver.Value) (driver.Value, bool) {
+	rv := reflect.ValueOf(res)
+	var n any
+	switch rv.Kind() {
+	case reflect.String:
+		n = rv.String()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		n = rv.Int()
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		n = rv.Uint()
+	case reflect.Float32, reflect.Float64:
+		n = rv.Float()
+	case reflect.Bool:
+		n = rv.Bool()
+	case reflect.Slice:
+		if rv.Type().Elem().Kind() != reflect.Uint8 {
+			return nil, false
+		}
+		n = rv.Bytes()
+	case reflect.Array:
+		if k != Text || rv.Len() != 16 || rv.Type().Elem().Kind() != reflect.Uint8 {
+			return nil, false
+		}
+		var b [16]byte
+		reflect.Copy(reflect.ValueOf(&b).Elem(), rv)
+		n = UUID(b)
+	default:
+		return nil, false
+	}
+	if reflect.TypeOf(n) == rv.Type() {
+		return nil, false // already unnamed: the kind can't take it
+	}
+	return n, true
 }
 
 func asInt64(v any) (int64, bool) {

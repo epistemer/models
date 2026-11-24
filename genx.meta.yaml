@@ -289,6 +289,22 @@ defs: |
           else $views end
       end;
 
+  # The names an enums file uses that a query's constant could hide: the
+  # packages it imports and the predeclared ones its methods use (A5).
+  def enums_names: ["fmt", "i18n", "option", "string", "error", "nil", "byte"];
+
+  # enums_checks($m): the check of §6 that is enums' own; $m, model($p),
+  # when the schema has an enum. Input is the request.
+  def enums_checks($m):
+    if ($m.enums | length) == 0 then empty
+    else
+      ([.queries[]? | .name | {name: ., const: ((.[0:1] | ascii_downcase) + .[1:])}
+        | select(.const | IN(enums_names[]))][0]) as $q
+      | if $q != null
+        then error("models: query \($q.name | tojson) gives sqlc the constant \($q.const | tojson), which hides a name the enums file uses")
+        else $m end
+    end;
+
   # The names a pgx file uses that a query's constant could hide: the
   # package it imports and the predeclared ones its function uses.
   def pgx_names: ["context", "pgx", "string", "error", "nil"];
@@ -337,8 +353,8 @@ generators:
     units: |
       params as $p
       | request
-      | model($p)
-      | select(.enums | length > 0)
+      | model($p) as $m
+      | enums_checks($m)
       | {package: $p.pkg, dir: $p.dir, enums: .enums}
     out: '"\(.dir)/zz_\(.package)_enums.go"'
     template: enums.go.tmpl
